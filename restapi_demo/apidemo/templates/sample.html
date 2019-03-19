@@ -1,0 +1,111 @@
+<div class="card-columns">
+{% for i in notelist %}
+
+        <!--{% if forloop.first %}<div class="card-columns">{% endif %}-->
+        <article id="{{i.id}}" class="card" style="background-color:{{i.for_color}};height:240px;">
+        <a href="#" data-toggle="modal" data-target="#myModal" id="page-button i" style="background-color:{{i.color}};" >
+                <!--<figure class="thumbnail" style=" border: 0px solid #ddd;;padding: 0px;">-->
+                <!--</figure>-->
+                <div class="card-content" >
+                <h3 id="text_box" data-model-name="text_box"  value={{i.title}}>{{i.title }}</h3>
+                    <!--<input type="text" id="abc" name="abc" value="abc">-->
+                <p id="text_area" data-model-name="text_area" value={{i.description}}>{{i.description}}</p>
+                <a href="{% url 'pin_unpin' i.id %}" style="position: absolute;top: 10px;right: -250px;" class="card-link"><span class="glyphicon glyphicon-pushpin"></span></a>
+
+                      <div>
+                          <div  class="dropdown" >
+                                     <button class="btn btn-default dropdown-toggle" type="button" id="" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" style=" background-color: transparent;box-shadow: none;height: 3px;width: 25px;font-family:Roboto;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" id="remainder">
+                                         <path d="M13 9h-2v2H9v2h2v2h2v-2h2v-2h-2z"/>
+                                         <path d="M18 17v-6c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v6H4v2h16v-2h-2zm-2 0H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6zm-4 5c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2z"/>
+                                     </svg>
+                                     </button>
+
+                                    <ul class="dropdown-menu" aria-labelledby="remainderMenu1" style=" margin-left: -17px; margin-top: -22px;">
+                                         <label>Remainder</label>
+                                      <select name="reminder" >
+                                        <option value="" selected disabled hidden>Choose here</option>
+                                        <option value="Today">Today</option>
+                                          <option value="Tomorow">Tomorow</option>
+                                          <option value="Next Week">Next Week</option>
+                                          <option value="Next Month" selected>Next Month</option>
+                                        </select>
+                                      <li><a href="#">
+
+                                      </a>
+                                      </li>
+                                     </ul>
+                                 </div>
+
+                                <!--colabrator-->
+                                 <div role="button" class="btn " style="margin: -20px;margin-top: -100px;margin-left: 48px;" aria-label="Collaborator">
+                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" id="Collaborator">
+                                     <path d="M9 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0-6c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm0 7c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4zm6 5H3v-.99C3.2 16.29 6.3 15 9 15s5.8 1.29 6 2v1zm3-4v-3h-3V9h3V6h2v3h3v2h-3v3h-2z"/>
+                                     </svg>
+                                 </div>
+
+                                    <!--color-->
+                               <div class="dropdown" name=clicked_id id=clicked_id>
+                                <button class="btn btn-default dropdown-toggle" type="button" id="color-btn" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                                       <path d="M12 22C6.49 22 2 17.51 2 12S6.49 2 12 2s10 4.04 10 9c0 3.31-2.69 6-6 6h-1.77c-.28 0-.5.22-.5.5 0 .12.05.23.13.33.41.47.64 1.06.64 1.67A2.5 2.5 0 0 1 12 22zm0-18c-4.41 0-8 3.59-8 8s3.59 8 8 8c.28 0 .5-.22.5-.5a.54.54 0 0 0-.14-.35c-.41-.46-.63-1.05-.63-1.65a2.5 2.5 0 0 1 2.5-2.5H16c2.21 0 4-1.79 4-4 0-3.86-3.59-7-8-7z"/><circle cx="6.5" cy="11.5" r="1.5"/>
+                                       <circle cx="9.5" cy="7.5" r="1.5"/><circle cx="14.5" cy="7.5" r="1.5"/><circle cx="17.5" cy="11.5" r="1.5"/>
+                                    </svg>
+                                </button>
+                                   <!--colors in dropdown-->
+                                <ul class="dropdown-menu" aria-labelledby="color-menu" style=" margin-left: 114px; margin-top: -22px;" >
+                                     <div class="row1">
+                                        <input class="bgcolor" type="button" style="background-color:white" value="    " name="white" id="white" onclick="changeColor(this.id)" />
+                                        <input class="bgcolor" type="button" style="background-color:#D7BDE2" value="    " name="#D7BDE2" id="#D7BDE2" onclick="changeColor(this.id)" />
+                                        <input class="bgcolor" type="button" style="background-color:#A3E4D7" value="    " name="#A3E4D7" id="#A3E4D7" onclick="changeColor(this.id)" />
+                                        <input class="bgcolor" type="button" style="background-color:#AEB6BF  " value="    " name="#AEB6BF" id="#AEB6BF" onclick="changeColor(this.id)" />
+                                    </div>
+                                    <div class="row1">
+                                        <input class="bgcolor" type="button" style="background-color:#FAD7A0  " value="    " id="#FAD7A0" name="#FAD7A0" onclick="changeColor(this.id)" />
+                                        <input class="bgcolor" type="button" style="background-color:#85C1E9  " value="    "  id= "#85C1E9" name="#85C1E9" onclick="changeColor(this.id)" />
+                                        <input class="bgcolor" type="button" style="background-color:#EDBB99" value="    " name="#EDBB99" id=#EDBB99" onclick="changeColor(this.id)" />
+                                        <input class="bgcolor" type="button" style="background-color:#D2F5B4" value="    " name="#D2F5B4" id="#D2F5B4" onclick="changeColor(this.id)" />
+                                    </div>
+                                    <div class="row3">
+                                        <input class="bgcolor" type="button" style="background-color:#CDE380  " value="    " name="#CDE380  " id="#CDE380" onclick="changeColor(this.id)" />
+                                        <input class="bgcolor" type="button" style="background-color:#E6A6AB  " value="    " name="#E6A6AB  " id="#E6A6AB" onclick="changeColor(this.id)" />
+                                        <input class="bgcolor" type="button" style="background-color:#B2B8E2  " value="    " name="#B2B8E2  " id="#B2B8E2" onclick="changeColor(this.id)" />
+                                        <input class="bgcolor" type="button" style="background-color:#DCE391  " value="    " name="#DCE391  " id="#DCE391" onclick="changeColor(this.id)" />
+                                    </div>
+
+                                 </ul>
+
+
+
+                            <!--Archive-->
+
+                            <div ><a href="{% url 'is_archived' i.id %}" role="button"   class="btn" style="position:absolute; left:250px; top:2px;width:10px;" >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" id="archive">
+                                    <path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM6.24 5h11.52l.83 1H5.42l.82-1zM5 19V8h14v11H5zm11-5.5l-4 4-4-4 1.41-1.41L11 13.67V10h2v3.67l1.59-1.59L16 13.5z"></path>
+                                    </svg></a>
+                                </div>
+
+                               </div>
+            <!--More Options-->
+
+          <div class="dropdown  show dropleft" style="width:80px;top:-30px;" >
+        <a class="btn-s   dropdown-toggle" href="#" id="dropdownMenuLink" data-toggle="dropdown"  style="padding-left:240px;width:20px;">
+            <span class="glyphicon glyphicon-option-vertical" style="padding-left:130px;width:20px;top:-17px"></span>
+          </a>
+            <ul class="dropdown-menu dropleft">
+                <a class="dropdown-item" href="{% url 'deleteN' i.id %}" style="padding-left:100px;width:20;">Trash</a>
+            <a class="dropdown-item" href="{% url 'updatenote' i.id %}" style="padding-left:100px;">Update</a>
+            <a class="dropdown-item" href="{% url 'updateform' i.id %}" style="padding-left:100px;">New Update</a>
+              <a class="dropdown-item" href="{% url 'delete_forever' i.id %}" style="padding-left:100px;">Delete Forever</a>
+
+              <li class="dropdown-submenu "  >
+                <a class="test"  href="#" style="padding-left:100px;">Add Label</a>
+                <ul class="dropdown-menu">
+                    {% for i in labels %}
+                    <li>   <a href="#" style="padding-left:100px;" >{{i}}</a></li>
+                    {% endfor %}
+
+                </ul>
+              </li>
+            </ul>
+          </div>

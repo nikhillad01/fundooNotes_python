@@ -1,0 +1,7 @@
+{% if notelist.count > 0 %}
+{% for n in notelist %}
+<li> {{ n }}</li>
+{% endfor %}
+{% else %}
+<li>None to show </li>
+{% endif %}

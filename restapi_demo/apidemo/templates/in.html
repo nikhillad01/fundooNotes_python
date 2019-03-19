@@ -1,0 +1,1218 @@
+<!doctype html>
+{% load static %}
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>fundooNotes</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.37/css/bootstrap-datetimepicker.min.css" />
+    <!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>-->
+   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.js">
+    <script type="text/javascript" src="{% static 'JS/script.js' %}"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="{% static 'JS/cropper.min.js' %}"> </script>
+    <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.37/js/bootstrap-datetimepicker.min.js"></script>-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.3.0/js/bootstrap-datepicker.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" >
+
+
+
+    <link rel="shortcut icon" href="{% static 'images/keep_48dp.png' %}" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+    <link href='https://fonts.googleapis.com/css?family=Sofia' rel='stylesheet'>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/label.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/main.css' %}" />
+
+
+
+</head>
+<style>
+.btn-group img { margin-right: 10px }
+.dropdown-toggle { padding-right: 50px }
+.dropdown-toggle .glyphicon { margin-left: 20px; margin-right: -40px }
+.dropdown-menu>li>a:hover { background: #f1f9fd } /* $search-blue */
+.dropdown-header { background: #7777772b; font-size: 14px; font-weight: 700; padding-top: 5px; padding-bottom: 5px; margin-top: 10px; margin-bottom: 5px }
+</style>
+
+<!--stores token to clients( browsers local storage)-->
+<script>
+$(document).ready(function(){
+  $('.dropdown-submenu a.test').on("click", function(e){
+    console.log("toggle button clicked");
+    <!--$(this).next('ul').toggle();-->
+    <!--e.stopPropagation();-->
+    <!--e.preventDefault();-->
+  });
+});
+</script>
+
+<script>
+localStorage.setItem('token', ("{{token.data}}"));
+
+ var value = localStorage.getItem('token');
+ console.log(value)
+
+
+
+</script>
+
+<style>
+.dropdown-submenu {
+  position: relative;
+}
+
+.dropdown-submenu .dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -1px;
+}
+.tag {
+  font-size: 14px;
+  padding: .3em .4em .4em;
+  margin: 0 .1em;
+}
+.tag a {
+  color: #bbb;
+  cursor: pointer;
+  opacity: 0.6;
+}
+.tag a:hover {
+  opacity: 1.0
+}
+.tag .remove {
+  vertical-align: bottom;
+  top: 0;
+}
+.tag a {
+  margin: 0 0 0 .3em;
+}
+.tag a .glyphicon-white {
+  color: #fff;
+  margin-bottom: 2px;
+}
+</style>
+<body>
+
+<!--Wrapper class is used wrap all the elements which are used to toggle-->
+
+<div id="wrapper" class="wapper_forNote">
+        <nav id="navigationbar" class="navbar navbar navbar-fixed-top" role="navigation">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <div  class="navbar-brand">
+                        <a id="menu-toggle" href="#" class="glyphicon glyphicon-align-justify btn-menu toggle">
+                        <a id="fundoo-img" class="navbar-brand" href="#" style="width:90px;">
+                        <img src="https://www.gstatic.com/images/branding/product/1x/keep_48dp.png" width="40" height="40" class="d-inline-block align-top" alt="" align="left" hspace="35">
+                        </a>
+                        </a>
+                        <i class="fa fa-bars"></i>
+                        </a>
+                        <a style="margin-right:1300px;color: #635f5f;font-size: 20px;font-family: Roboto;" href="#">fundooNotes</a>
+                        <button class="search-btn" aria-label="Search" role="button" id="searchicon">
+                              <svg focusable="false" height="24px" viewBox="0 0 24 24" width="24px" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path>
+                                  <path d="M0 0h24v24H0z" fill="none"></path>
+                              </svg>
+                        </button>
+                       </div>
+                </div>
+
+
+                <div class="navbar-form navbar-left" style="margin-top:-0px;">
+                      <div class="form-group" style="font-family:Roboto;margin-left:500px;padding-bottom:20px;">
+                                {% csrf_token %}
+
+                              <input class="form-control input-lg" id="search" name="search" type="text" type="search" placeholder="Search" aria-label="Search" style="margin-top:-60px;">
+                          <div id="search-results"></div>
+
+                      </div>
+                    <a href="{% url 'getnotes' %}" class="btn" role="button" style="margin-left: 20px;" data-toggle="tooltip" data-placement="bottom" title="Refresh"><span class="glyphicon glyphicon-repeat" onclick="refresh"></span></a>
+
+                    <a href="#" class="btn" role="button" style="padding-left: 20px;" id="grid_list"><span class="glyphicon glyphicon-th-large" ></span></a>
+
+                    <a href="#" class="btn" role="button" style="padding-left: 20px;" ><span class="glyphicon glyphicon-cog" ></span></a>
+
+                    <a href="#" class="btn" role="button" style="padding-right: 50px;" id="col3_btn"><span class="glyphicon glyphicon-th" ></span></a>
+
+                    <a href="#" class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" role="button" style="margin-left:1150px;margin-bottom:50px;" data-toggle="tooltip" data-placement="bottom" title="Notifications" id="notification_icon" ><span class="glyphicon glyphicon-bell" ></span></a>
+
+<div  class="dropdown-menu pull-right" id="here" aria-labelledby="dropdownMenuButton" >
+
+                                             </div>
+
+
+
+
+
+
+
+     <div class="btn btn-circle btn-xl" style="margin-left: 1000px;margin-top:-55px;"  data-toggle="tooltip" data-placement="bottom" title="Account Details">
+
+        <button type="button" class="btn btn-circle btn-lg   " data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="margin-left:170px;margin-top:-100px;height:20px;width:20px;">
+          <img src="https://s3.ap-south-1.amazonaws.com/fundoo/{{ user.username }}" width="25" height="28">
+        </button>
+             <ul class="dropdown-menu dropdown-menu-right" style="font-family: Roboto;">
+              <li class="dropdown-header">Basic Info</li>
+
+                 <!--class to display user info-->
+
+                  <div class="card" style="width:270px height:50px font-family: Roboto;">
+                    <img class="card-img-top btn-circle btn-xl" src="https://s3.ap-south-1.amazonaws.com/fundoo/{{ user.username }}" alt="Card image" width="60" height="65">
+                    <div class="card-body">
+                        <b><h5 class="card-title">{{ user.username }}</h5></b>
+                      <p class="card-text">{{ user.email }}</p>
+                        <br>
+                     <a href="{% url 'photo_list' %}" style="font-family: Roboto;padding-left:120px;">See Profile</a>
+
+                        <nobr></nobr></div>
+
+
+              </li>
+              <li class="dropdown-header"></li>
+              <li>
+                  <a href="{% url 'logout' %}"  style=" font-family: Roboto;padding-left:120px;">Logout</a>
+
+              </li>
+                  </div>
+            </ul>
+
+     </div>
+
+                </div>
+            </div>
+        </nav>
+
+    <!--hr tag to print line-->
+
+        <div class="sep" style="width:840px;">
+
+        <hr id="divider"><div class="sepText"></div>
+        </div>
+{% if messages %}
+    {% for message in messages %}<span>
+        <div class="alert alert-success alert-dismissible" role="alert">
+            <button class="close" data-dismiss="alert">
+                <small><sup></sup></small>
+            </button>
+            {{ message }}
+        </div></span>
+    {% endfor %}
+{% endif %}
+        <!-- Sidebar -->
+
+     <div id="sidebar-wrapper" style="font-family:Roboto;margin-top:50px;">
+            <nav id="spy">
+                <ul class="sidebar-nav nav">
+
+                    <li style="margin-top: 5px;" >
+                        <span class="glyphicon glyphicon-light-bulb"></span>
+                        <a href="{% url 'getnotes' %}" style="margin-top:20px;">
+                            <span class="glyphicon glyphicon-book"></span>
+                            <span class="fa fa-home solo"><b>Notes</b></span>
+                        </a>
+                    </li>
+
+
+                    <li style="margin-top: -19px;">
+                        <a href="{% url 'View_reminder' %}">
+                            <span  class="glyphicon glyphicon-bell"></span>
+                            <span class="fa fa-anchor solo"><b>Reminders</b></span>
+                        </a>
+                    </li>
+                    <div class="sep">
+                         <hr class="seprator"><div class="sepText"></div>
+                    </div>
+                    <hr>
+                    <div class="label-item">
+                        <span class="label-span"></span>
+                        <div class=" "style="    margin-left: 17px; margin-bottom: 14px;;">Labels</div>
+                         {% for label in all_labels %}
+
+                          {% endfor %}
+                    <li style="margin-top: 22px;">
+
+                        <!--Add label-->
+                        {% for p in labels %}
+                             <!--<a href="#lable" data-toggle="modal" data-target="#mylabelModal" id="label-modal">-->
+                        <a href="#" style="margin-right:5%;">
+                        <span class="glyphicon glyphicon-tag"></span>
+                        <!--<span class="fa fa-anchor solo"><b>-->
+                            <span class="fa fa-anchor solo" ><a style="margin-top:-40px;" href="{% url 'view_notes_for_each_label' p.id  %}"><b>{{p}}</b></a></span>
+
+
+                            <!--<span class="fa fa-anchor solo"><b>{{i}}</b></span>-->
+
+                        </a>
+                        {% endfor %}
+                        <a href="#lable" data-toggle="modal" data-target="#mylabelModal" id="label-modal">
+                            <span class="glyphicon glyphicon-pencil"></span>
+                            <span class="fa fa-anchor solo"><b>Edit labels</b></span>
+                        </a>
+                    </li>
+                    </div>
+
+                    <li>
+                        <!--hr line after labels-->
+
+                    <div class="sep">
+                        <hr class="seprator"><div class="sepText">
+                    </div>
+
+                   </div>
+                        <a href="{% url 'View_is_archived' %}" style="margin-top: -13px;">
+                            <span class="glyphicon glyphicon-save"></span>
+                            <span class="fa fa-anchor solo"><b>Archive</b></span>
+                        </a>
+
+                    </li>
+                    <li>
+                        <a href="{% url 'view_trash' %}" style="margin-top: -22px;">
+                            <span class="glyphicon glyphicon-trash"></span>
+                            <span class="fa fa-anchor solo"><b>Trash</b></span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+
+
+    <!--Add Note-->
+
+
+    <div class="panel panel-danger" id="add_note">
+                            <div class="panel-body" style="font-family:Roboto;">
+                                 <form method="post" action="{% url 'addnote' %}" id="addnoteform">
+                                 {% csrf_token %}
+                                     <div class="form-group">
+                                           <div role="button" class="pin-note" ><span id="pin" class="glyphicon glyphicon-pushpin"></span></div>
+                                     </div>
+                                     <div class="form-group">
+                                         <div id="menu"><input type="text" name="title" id="title" maxlength="150" autofocus="" class="textinput textInput form-control" placeholder="Title" required></div>
+                                     </div>
+                                     <div class="form-group">
+                                         <div class="form-group shadow-textarea">
+                                             <textarea class="form-control z-depth-1" id="description"name="description" rows="3" placeholder="Take a note..." required></textarea>
+                                         </div>
+                                     </div>
+                                     <div class="form-group">
+                                        <input type="hidden" id="user" name="user" value={{user.id}}>
+                                     </div>
+
+                                     <div class="form-group">
+                                        <input type="hidden" id="for_color" name="for_color" >
+                                     </div>
+
+                                 <div  class="dropdown" >
+                                     <button class="btn btn-default dropdown-toggle" type="button" id="" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" style=" background-color: transparent;box-shadow: none;height: 3px;width: 10px;font-family:Roboto;" data-toggle="tooltip" data-placement="bottom" title="Reminder" >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" id="remainder">
+                                         <path d="M13 9h-2v2H9v2h2v2h2v-2h2v-2h-2z"/>
+                                         <path d="M18 17v-6c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v6H4v2h16v-2h-2zm-2 0H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6zm-4 5c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2z"/>
+                                     </svg>
+                                     </button>
+
+                                    <ul class="dropdown-menu" aria-labelledby="remainderMenu1" style=" margin-left: -17px; margin-top: -22px;">
+                                         <label>Remainder</label>
+
+
+                                <div class="row">
+                                    <div class='col-sm-6'>
+                                        <div class="form-group">
+                                            <div class='input-group date' id='datetimepicker1'>
+                                                <input type='text' class="form-control" name="reminder" id="reminder" />
+                                                <span class="input-group-addon">
+                                                    <span class="glyphicon glyphicon-calendar"></span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+
+                                      <li><a href="#"><svg height="18px" width="18px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="#000000">
+                                       <path d="m23.99 4c-11.05 0-19.99 8.95-19.99 20s8.94 20 19.99 20c11.05 0 20.01-8.95 20.01-20s-8.96-20-20.01-20zm0.01 36c-8.84 0-16-7.16-16-16s7.16-16 16-16 16 7.16 16 16-7.16 16-16 16z"/>
+                                       <path d="m0 0h48v48h-48z" fill="none"/>
+                                       <path d="m25 14h-3v12l10.49 6.3 1.51-2.46-9-5.34z"/>
+                                      </svg>
+                                      <!--Select date and time-->
+                                      </a>
+                                      </li>
+                                     </ul>
+                                 </div>
+
+                                <!--colabrator-->
+
+                                 <div role="button" class="btn  dropdown" style="margin: -20px;margin-top: -45px;margin-left: 48px;" aria-label="Collaborator" >
+                                     <button class="btn btn-default dropdown-toggle" type="button" id="" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" style=" background-color: transparent;box-shadow: none;height: 3px;width: 25px;font-family:Roboto;" data-toggle="tooltip" data-placement="bottom" title="Collaborate">
+                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" id="Collaborator">
+                                     <path d="M9 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0-6c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm0 7c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4zm6 5H3v-.99C3.2 16.29 6.3 15 9 15s5.8 1.29 6 2v1zm3-4v-3h-3V9h3V6h2v3h3v2h-3v3h-2z"/>
+                                     </svg></button>
+                                     <ul class="dropdown-menu">
+                                        <h4><span class="label label-default">Collabrators</span></h4>
+
+                                         owner : {{ user.username }}<br>
+                                         <select name="collaborate" multiple>
+                                             {% for a_user in all_users %}
+                                             <option value={{a_user.id}}>{{a_user.username}}</option>
+
+                                             {% endfor %}
+
+                                        </select>
+                                     </ul>
+                                 </div>
+
+                                    <!--color-->
+                               <div class="dropdown" name=clicked_id id=clicked_id>
+                                <button class="btn btn-default dropdown-toggle" type="button" id="color-btn" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" data-toggle="tooltip" data-placement="bottom" title="Change color">
+                                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                                       <path d="M12 22C6.49 22 2 17.51 2 12S6.49 2 12 2s10 4.04 10 9c0 3.31-2.69 6-6 6h-1.77c-.28 0-.5.22-.5.5 0 .12.05.23.13.33.41.47.64 1.06.64 1.67A2.5 2.5 0 0 1 12 22zm0-18c-4.41 0-8 3.59-8 8s3.59 8 8 8c.28 0 .5-.22.5-.5a.54.54 0 0 0-.14-.35c-.41-.46-.63-1.05-.63-1.65a2.5 2.5 0 0 1 2.5-2.5H16c2.21 0 4-1.79 4-4 0-3.86-3.59-7-8-7z"/><circle cx="6.5" cy="11.5" r="1.5"/>
+                                       <circle cx="9.5" cy="7.5" r="1.5"/><circle cx="14.5" cy="7.5" r="1.5"/><circle cx="17.5" cy="11.5" r="1.5"/>
+                                    </svg>
+                                </button>
+                                   <!--colors in dropdown-->
+                                <ul class="dropdown-menu" aria-labelledby="color-menu" style=" margin-left: 114px; margin-top: -22px;" >
+                                     <div class="row1">
+                                        <input class="bgcolor" type="button" style="background-color:white" value="    " name="white" id="white" onclick="changeColor(this.id)" />
+                                        <input class="bgcolor" type="button" style="background-color:#D7BDE2" value="    " name="#D7BDE2" id="#D7BDE2" onclick="changeColor(this.id)" />
+                                        <input class="bgcolor" type="button" style="background-color:#A3E4D7" value="    " name="#A3E4D7" id="#A3E4D7" onclick="changeColor(this.id)" />
+                                        <input class="bgcolor" type="button" style="background-color:#AEB6BF  " value="    " name="#AEB6BF" id="#AEB6BF" onclick="changeColor(this.id)" />
+                                    </div>
+                                    <div class="row1">
+                                        <input class="bgcolor" type="button" style="background-color:#FFB447  " value="    " id="#FFB447" name="#FFB447" onclick="changeColor(this.id)" />
+                                        <input class="bgcolor" type="button" style="background-color:#85C1E9  " value="    "  id= "#85C1E9" name="#85C1E9" onclick="changeColor(this.id)" />
+                                        <input class="bgcolor" type="button" style="background-color:#EDBB99" value="    " name="#EDBB99" id=#EDBB99" onclick="changeColor(this.id)" />
+                                        <input class="bgcolor" type="button" style="background-color:#D2F5B4" value="    " name="#D2F5B4" id="#D2F5B4" onclick="changeColor(this.id)" />
+                                    </div>
+                                    <div class="row3">
+                                        <input class="bgcolor" type="button" style="background-color:#CDE380  " value="    " name="#CDE380  " id="#CDE380" onclick="changeColor(this.id)" />
+                                        <input class="bgcolor" type="button" style="background-color:#E6A6AB  " value="    " name="#E6A6AB  " id="#E6A6AB" onclick="changeColor(this.id)" />
+                                        <input class="bgcolor" type="button" style="background-color:#B2B8E2  " value="    " name="#B2B8E2  " id="#B2B8E2" onclick="changeColor(this.id)" />
+                                        <input class="bgcolor" type="button" style="background-color:#DCE391  " value="    " name="#DCE391  " id="#DCE391" onclick="changeColor(this.id)" />
+                                    </div>
+
+                                 </ul>
+                                <!--</div>-->
+
+                                </div>
+
+                                <div role="button" class="btn " style="margin: -39px; margin-left: 149px;margin-top: -191px;" data-toggle="tooltip" data-placement="bottom" title="Add image">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" id="pic">
+                                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-5-7l-3 3.72L9 13l-3 4h12l-4-5z"/>
+                                    </svg>
+                                </div>
+                                <div role="button" class="btn " style="margin: -39px;margin-left: 35px;margin-top: -190px;" data-toggle="tooltip" data-placement="bottom" title="Archive">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" id="archive">
+                                    <path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM6.24 5h11.52l.83 1H5.42l.82-1zM5 19V8h14v11H5zm11-5.5l-4 4-4-4 1.41-1.41L11 13.67V10h2v3.67l1.59-1.59L16 13.5z"/>
+                                    </svg>
+                                </div>
+                                <div  id="note-button-6">
+                                    <div role="button" class="btn " style="margin: -26px;margin-left: 265px;margin-top: -213px;" data-toggle="tooltip" data-placement="bottom" title="More">
+                                        <svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" version="1.1" y="0px" x="0px" viewBox="0 0 18 18" enable-background="new 0 0 18 18"  height="18" width="25">
+                                          <path d="m9 5.5c1 0 1.8-0.8 1.8-1.8s-0.8-1.7-1.8-1.7-1.8 0.8-1.8 1.8 0.8 1.7 1.8 1.7zm0 1.7c-1 0-1.8 0.8-1.8 1.8s0.8 1.8 1.8 1.8 1.8-0.8 1.8-1.8-0.8-1.8-1.8-1.8zm0
+                                                 5.3c-1 0-1.8 0.8-1.8 1.8s0.8 1.7 1.8 1.7 1.8-0.8 1.8-1.8-0.8-1.7-1.8-1.7z"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                                  <!--<ul class="dropdown-menu" id="note-button-6-actions" style="display:none" data-toggle="tooltip" data-placement="bottom" title="Undo">-->
+                                      <!--<li><a href="#">Change labels</a></li>-->
+                                      <!--<li><a href="#">Add drawing</a></li>-->
+                                      <!--<li><a href="#">Show tick boxes</a></li>-->
+                                  <!--</ul>-->
+
+                                <div role="button" class="btn " style="margin: -26px; margin-left: 322px;margin-top: -253px;" data-toggle="tooltip" data-placement="bottom" title="Undo">
+                                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                                       <path d="M14.1 8H7.83l2.59-2.59L9 4 4 9l5 5 1.41-1.41L7.83 10h6.27c2.15 0 3.9 1.57 3.9 3.5S16.25 17 14.1 17H7v2h7.1c3.25 0 5.9-2.47 5.9-5.5S17.35 8 14.1 8z"/>
+                                   </svg>
+                                </div>
+                                 <div class="form-group">
+                                 <button id="close" name="close" class="btn btn-outline-info" type="submit" style="  margin: -78px;margin-left: 505px;margin-top: -343px;" >Close</button>
+                                  </div>
+                                     <!--</div>-->
+                              </form>
+             </div>
+
+   </div>
+
+
+        <!--Prints all the Notes-->
+
+<div class="card-columns demo ">
+
+    {% for i in notelist %}
+
+    <div >
+         <article id="{{i.id}}" class="card" style="background-color:{{i.for_color}};height:240px;width:210px;">
+             <div href="#" data-toggle="modal" data-target="#myModal" id="page-button i" style="background-color:{{i.color}};" >
+             <div class="card-content" >
+                  <h3 id="text_box1" data-model-name="text_box"  value={{i.title}}>{{i.title }}</h3>
+                  <p id="text_area1" data-model-name="text_area" value={{i.description}}>{{i.description}}</p>
+                  <a href="{% url 'pin_unpin' i.id %}" style="position: absolute;top: 10px;right: -140px;" class="card-link"><span class="glyphicon glyphicon-pushpin" data-toggle="tooltip" data-placement="bottom" title="Pin note"></span></a>
+                 <!--suspected div   -->
+
+                    <!--{% for c in collaborators_to_note %}-->
+                        <!--{% if i.id == c.notes_id %}-->
+                    <!--<p>collabs:  {{c.user_id }}</p>-->
+                        <!--{% endif %}-->
+                    <!--{% endfor %}-->
+
+                     <div  class="dropdown" style="margin-top:100px;">
+
+                        <button class="btn btn-default dropdown-toggle" type="button" id="" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" style=" background-color: transparent;box-shadow: none;height: 3px;width: 5px;font-family:Roboto;margin-right:100px;" data-toggle="tooltip" data-placement="bottom" title="Reminder">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" id="remainder">
+                                         <path d="M13 9h-2v2H9v2h2v2h2v-2h2v-2h-2z"/>
+                                         <path d="M18 17v-6c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v6H4v2h16v-2h-2zm-2 0H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6zm-4 5c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2z"/>
+                                     </svg>
+                                     </button>
+
+                                     <ul class="dropdown-menu" aria-labelledby="remainderMenu1" style=" margin-left: -17px; margin-top: -22px;">
+                                         <label>Remainder</label>
+
+
+                                <div class="row">
+                                    <div class='col-sm-6'>
+                                        <div class="form-group">
+                                            <div class='input-group date' id='datetimepicker2'>
+                                                <input type='text' class="form-control" name="reminder1" id="reminder1" />
+                                                <span class="input-group-addon">
+                                                    <span class="glyphicon glyphicon-calendar"></span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                     </div>
+
+
+
+
+                               <!--colabrator-->
+                                 <div role="button" class="btn  dropdown" style="margin: -20px;margin-top: -45px;margin-left: 48px;" aria-label="Collaborator" >
+                                     <button class="btn btn-default dropdown-toggle" type="button" id="" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" style=" background-color: transparent;box-shadow: none;height: 3px;width: 25px;font-family:Roboto;" data-toggle="tooltip" data-placement="bottom" title="Collaborate">
+                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" id="Collaborator">
+                                     <path d="M9 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0-6c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm0 7c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4zm6 5H3v-.99C3.2 16.29 6.3 15 9 15s5.8 1.29 6 2v1zm3-4v-3h-3V9h3V6h2v3h3v2h-3v3h-2z"/>
+                                     </svg></button>
+
+                                     <ul class="dropdown-menu" >
+                                         <h4><span class="label label-default">Collabrators</span></h4>
+
+                                         owner : {{ user.username }}
+                                         <br>
+                                        <form method="post" action="{% url 'Update' i.id%}">
+                                         <select name="collaborate" id="collaborate" multiple style="height:160px;">
+                                             {% for a_user in all_users %}
+                                             <option  value={{a_user.id}}>{{a_user.username}}</option>
+
+                                             {% endfor %}
+
+                                        </select>
+                                             <button type="submit">submit</button></form>
+                                        Invite Others:
+                                         <form method="post" action="{% url 'invite' %}" enctype="multipart/form-data">
+                                             <input type="email" name="email"  id="email" required/>
+                                             <button type="submit">Invite</button>
+                                         </form>
+                                     </ul>
+
+                                 </div>
+
+
+                                  <!--color-->
+                               <div class="dropdown"  >
+                                       <button class="btn btn-default dropdown-toggle" type="button" id="color-btn" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                                           <path d="M12 22C6.49 22 2 17.51 2 12S6.49 2 12 2s10 4.04 10 9c0 3.31-2.69 6-6 6h-1.77c-.28 0-.5.22-.5.5 0 .12.05.23.13.33.41.47.64 1.06.64 1.67A2.5 2.5 0 0 1 12 22zm0-18c-4.41 0-8 3.59-8 8s3.59 8 8 8c.28 0 .5-.22.5-.5a.54.54 0 0 0-.14-.35c-.41-.46-.63-1.05-.63-1.65a2.5 2.5 0 0 1 2.5-2.5H16c2.21 0 4-1.79 4-4 0-3.86-3.59-7-8-7z"/><circle cx="6.5" cy="11.5" r="1.5"/>
+                                           <circle cx="9.5" cy="7.5" r="1.5"/><circle cx="14.5" cy="7.5" r="1.5"/><circle cx="17.5" cy="11.5" r="1.5"/>
+                                        </svg>
+                                    </button>
+                                       <!--colors in dropdown-->
+                                    <ul class="dropdown-menu" aria-labelledby="color-menu" style=" margin-left: 114px; margin-top: -22px;" >
+                                        <form method="post" action="{% url 'change_color' i.id %}" style="height:22px;">
+                                            <center>
+                                            <select name="change_color" id="change_color" style="width:40px;" data-toggle="tooltip" data-placement="bottom" title="Change color">
+
+                                                <option   style="background-color:white" value="white"  ></option>
+                                                <option style="background-color:#D7BDE2" value="#D7BDE2" ></option>
+                                                <option   style="background-color:#A3E4D7" value="#A3E4D7"  ></option>
+                                                <option  style="background-color:#AEB6BF  " value="#AEB6BF" ></option>
+
+
+                                                <option   style="background-color:#FAD7A0" value="#FAD7A0" ></option>
+                                                <option  style="background-color:#85C1E9  " value="#85C1E9"   name="#85C1E9"  ></option>
+                                                <option  style="background-color:#EDBB99" value="#EDBB99" ></option>
+                                                <option  style="background-color:#D2F5B4" value="#D2F5B4" ></option>
+
+
+                                                <option  style="background-color:#CDE380" value="#CDE380" ></option>
+                                                <option  style="background-color:#E6A6AB  " value="#E6A6AB" ></option>
+                                                <option style="background-color:#B2B8E2 " value="#B2B8E2"  ></option>
+                                                <option  style="background-color:#DCE391  " value="#DCE391" ></option>
+                                        </select>
+                                            <button type="submit" style="background-color: {{i.for_color}};">Save</button>
+                                            </center>
+                                        </form>
+                                     </ul>
+
+                               </div>
+
+                                             <!--Archive-->
+
+                                <div >
+                                     <a href="{% url 'is_archived' i.id %}" role="button"   class="btn" style="margin-left:90px;margin-top:-150px;" data-toggle="tooltip" data-placement="bottom" title="Archive">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" id="archive">
+                                                    <path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM6.24 5h11.52l.83 1H5.42l.82-1zM5 19V8h14v11H5zm11-5.5l-4 4-4-4 1.41-1.41L11 13.67V10h2v3.67l1.59-1.59L16 13.5z"></path>
+                                                    </svg></a>
+                                </div>
+
+                 {% for l in all_map %}
+                    {% if l.note_id == i.id %}
+                 <!--<span class="badge" style="margin-top: -320px;">{{l.label_id}} </span>-->
+                 <span class="tag label badge" style="margin-top: -320px;height:23px;">
+                          <span>{{l.label_id}}</span>
+                          <a href="{% url 'remove_labels' i.id l.label_id_id %}"><i class="remove glyphicon glyphicon-remove-sign glyphicon-white"></i></a>
+                        </span>
+                    {% endif %}
+
+
+                 {% endfor %}
+
+            <!--Reminder Badge-->
+                 {% if i.reminder != None%}
+                 <span class="badge" style="margin-top: -250px;margin-left:-18px;" >{{i.reminder}}
+                    </span>
+                 {% endif %}
+
+
+
+                  <!--More Options-->
+                 <div class="dropdown  show dropleft" style="top:-150px;margin-left:25px;" >
+                        <a class="btn-xs   dropdown-toggle" href="#" id="dropdownMenuLink" data-toggle="dropdown"  style="margin-left:140px;width:20px;">
+                            <span class="glyphicon glyphicon-option-vertical" style="margin-left:150px;width:2px;top:-17px"></span>
+                          </a>
+                            <ul class="dropdown-menu dropleft">
+                                 <a class="dropdown-item" href="{% url 'copy_note' i.id %}" style="margin-left:0px;">Copy note</a>
+                                <a class="dropdown-item" href="{% url 'move_to_trash' i.id %}" style="margin-left:0px;width:20;">Trash</a>
+                            <a class="dropdown-item" href="{% url 'updatenote' i.id %}" style="margin-left:0px;">Update</a>
+                            <a class="dropdown-item" href="{% url 'updateform' i.id %}" style="margin-left:0px;">New Update</a>
+                              <a class="dropdown-item" href="{% url 'delete_forever' i.id %}" style="margin-left:0px;">Delete Forever</a>
+
+
+
+                                <!--Add labels-->
+
+
+                              <li class="dropdown-submenu "  >
+                                <a class="test"  href="#" style="margin-left:0px;">Add Label</a>
+                                <ul class="dropdown-menu">
+                                    {% for k in labels %}
+
+                                    <li><input type="checkbox"  name="labels" id="label_check"  onclick="addLabel(this,{{i.id}},{{k.id}},{{user.id}})" >{{k}}</li>
+                                    {% endfor %}
+
+                                </ul>
+                              </li>
+                            </ul>
+                 </div>
+        </div>
+            </article>
+    </div>
+
+    {% endfor %}
+
+
+                    <!--Ending Note For Loop -->
+
+                        <!--Pagination-->
+<center>
+
+<div class="pagination">
+    <span class="step-links">
+        {% if notelist.has_previous %}
+            <a href="?page=1">&laquo; first</a>
+            <a href="?page={{ notelist.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ notelist.number }} of {{ notelist.paginator.num_pages }}
+        </span>
+
+        {% if notelist.has_next %}
+            <a href="?page={{ notelist.next_page_number }}">next</a>
+            <a href="?page={{ notelist.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+    </span>
+</div>
+</center>
+
+
+
+       <center>
+<div class="neVct-Ne3sFf-Bz112c" align="center"></div><br>
+<div class="neVct-Ne3sFf-fmcmS" align="center" style="font-family:Roboto"><b>Notes you add appear here</b></div>
+       </center>
+</div>
+
+
+
+
+<!--<MODAL FOR CARD>-->
+
+<div class="modal fade" id="myModal">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+
+
+            <!-- Modal Header -->
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Modal body -->
+          <form method="post" enctype="multipart/form-data"  action="{% url 'updateNotes' 204 %}">
+              <input type="hidden" name="_method" value="put" />
+                     {% csrf_token %}
+                <div class="modal-body">
+
+                    <input type="hidden" id="pk_note" name="pk_note" value="204">
+                     <input type="hidden" id="user" name="user" value={{user.id}}>
+                    <input type="text" id="title" name="title" placeholder="Title"><br>
+                    <input type="text" id="description" name="description" placeholder="description"><br>
+                      <input type="submit" />
+                </div>
+          </form>
+
+                <!-- Modal footer -->
+      </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+                            <!--Modal for label add-->
+<div class="modal fade" id="mylabelModal" role="dialog">
+         <!--<div class="modal-dialog">-->
+              <div class="col-md-3" id="label-card">
+              <div class="panel panel-theme">
+                   <div class="panel-heading">
+                  <h3 class="panel-title">Edit Labels</h3>
+                   </div>
+                  <div class="panel-body">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <form method="POST" action="{% url 'add_labels' 49 %}">
+                        <input type="text" name="label_name" id="label_name" placeholder="Create new label"/>
+                        <input type="submit" />
+                    </form>
+                    {% for i in labels %}
+                      <!--<a href="{% url 'delete_label' i.id %}">-->
+                      <!--{{i}}-->
+
+                      <span class="glyphicon glyphicon-tag"></span>
+                        <span class="fa fa-anchor solo"><b> {{i}} </b></span>
+                          <a href="{% url 'delete_label' i.id %}">
+
+                               <span class="glyphicon glyphicon-trash"></span>
+
+                          </a><br>
+                      <!--</a>-->
+                      {% endfor %}
+                  </div>
+              </div>
+              </div>
+
+</div>
+
+<center>
+<div class="card-columns"   style = "position:relative; right:300px; top:-300px; ">
+
+    {% for i in not_list %}
+
+    <!--<div >-->
+         <article id="{{i.id}}" class="card" style="background-color:{{i.for_color}};height:240px;width:210px;">
+             <div href="#" data-toggle="modal" data-target="#myModal" id="page-button i" style="background-color:{{i.color}};" >
+             <div class="card-content" >
+                  <h3 id="text_box1" data-model-name="text_box"  value={{i.title}}>{{i.title }}</h3>
+                  <p id="text_area1" data-model-name="text_area" value={{i.description}}>{{i.description}}</p>
+                 <div class="row">
+                  <a href="{% url 'pin_unpin' i.id %}" style="position: absolute;top: 10px;right: -65px;" class="card-link"><span class="glyphicon glyphicon-pushpin" data-toggle="tooltip" data-placement="bottom" title="Pin note"></span></a>
+                 </div>
+
+
+ <div class="row">
+                     <div  class="dropdown" style="margin-top:100px;">
+
+                        <button class="btn btn-default dropdown-toggle" type="button" id="" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" style=" background-color: transparent;box-shadow: none;height: 3px;width: 5px;font-family:Roboto;margin-right:100px;" data-toggle="tooltip" data-placement="bottom" title="Reminder">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" id="remainder">
+                                         <path d="M13 9h-2v2H9v2h2v2h2v-2h2v-2h-2z"/>
+                                         <path d="M18 17v-6c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v6H4v2h16v-2h-2zm-2 0H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6zm-4 5c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2z"/>
+                                     </svg>
+                                     </button>
+
+                                     <ul class="dropdown-menu" aria-labelledby="remainderMenu1" style=" margin-left: -17px; margin-top: -22px;">
+                                         <label>Remainder</label>
+
+
+                                <div class="row">
+                                    <div class='col-sm-6'>
+                                        <div class="form-group">
+                                            <div class='input-group date' id='datetimepicker2'>
+                                                <input type='text' class="form-control" name="reminder1" id="reminder1" />
+                                                <span class="input-group-addon">
+                                                    <span class="glyphicon glyphicon-calendar"></span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                     </div>
+
+
+
+
+                               <!--colabrator-->
+                                 <div role="button" class="btn  dropdown" style="margin: -20px;margin-top: -25px;margin-left: 48px;" aria-label="Collaborator" >
+                                     <button class="btn btn-default dropdown-toggle" type="button" id="" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" style=" background-color: transparent;box-shadow: none;height: 3px;width: 25px;font-family:Roboto;" data-toggle="tooltip" data-placement="bottom" title="Collaborate">
+                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" id="Collaborator">
+                                     <path d="M9 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0-6c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm0 7c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4zm6 5H3v-.99C3.2 16.29 6.3 15 9 15s5.8 1.29 6 2v1zm3-4v-3h-3V9h3V6h2v3h3v2h-3v3h-2z"/>
+                                     </svg></button>
+
+                                     <ul class="dropdown-menu" >
+                                         <h4><span class="label label-default">Collabrators</span></h4>
+
+                                         owner : {{ user.username }}
+                                         <br>
+                                        <form method="post" action="{% url 'Update' i.id%}">
+                                         <select name="collaborate" id="collaborate" multiple style="height:160px;">
+                                             {% for a_user in all_users %}
+                                             <option  value={{a_user.id}}>{{a_user.username}}</option>
+
+                                             {% endfor %}
+
+                                        </select>
+                                             <button type="submit">submit</button></form>
+                                        Invite Others:
+                                         <form method="post" action="{% url 'invite' %}" enctype="multipart/form-data">
+                                             <input type="email" name="email"  id="email" required/>
+                                             <button type="submit">Invite</button>
+                                         </form>
+                                     </ul>
+
+                                 </div>
+
+
+                                  <!--color-->
+                               <div class="dropdown"  style="margin-top:20px;">
+                                       <button class="btn btn-default dropdown-toggle" type="button" id="color-btn" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                                           <path d="M12 22C6.49 22 2 17.51 2 12S6.49 2 12 2s10 4.04 10 9c0 3.31-2.69 6-6 6h-1.77c-.28 0-.5.22-.5.5 0 .12.05.23.13.33.41.47.64 1.06.64 1.67A2.5 2.5 0 0 1 12 22zm0-18c-4.41 0-8 3.59-8 8s3.59 8 8 8c.28 0 .5-.22.5-.5a.54.54 0 0 0-.14-.35c-.41-.46-.63-1.05-.63-1.65a2.5 2.5 0 0 1 2.5-2.5H16c2.21 0 4-1.79 4-4 0-3.86-3.59-7-8-7z"/><circle cx="6.5" cy="11.5" r="1.5"/>
+                                           <circle cx="9.5" cy="7.5" r="1.5"/><circle cx="14.5" cy="7.5" r="1.5"/><circle cx="17.5" cy="11.5" r="1.5"/>
+                                        </svg>
+                                    </button>
+                                       <!--colors in dropdown-->
+                                    <ul class="dropdown-menu" aria-labelledby="color-menu" style=" margin-left: 114px; margin-top: -90px;" >
+                                        <form method="post" action="{% url 'change_color' i.id %}" style="height:22px;">
+                                            <center>
+                                            <select name="change_color" id="change_color" style="width:40px;" data-toggle="tooltip" data-placement="bottom" title="Change color">
+
+                                                <option   style="background-color:white" value="white"  ></option>
+                                                <option style="background-color:#D7BDE2" value="#D7BDE2" ></option>
+                                                <option   style="background-color:#A3E4D7" value="#A3E4D7"  ></option>
+                                                <option  style="background-color:#AEB6BF  " value="#AEB6BF" ></option>
+
+
+                                                <option   style="background-color:#FAD7A0" value="#FAD7A0" ></option>
+                                                <option  style="background-color:#85C1E9  " value="#85C1E9"   name="#85C1E9"  ></option>
+                                                <option  style="background-color:#EDBB99" value="#EDBB99" ></option>
+                                                <option  style="background-color:#D2F5B4" value="#D2F5B4" ></option>
+
+
+                                                <option  style="background-color:#CDE380" value="#CDE380" ></option>
+                                                <option  style="background-color:#E6A6AB  " value="#E6A6AB" ></option>
+                                                <option style="background-color:#B2B8E2 " value="#B2B8E2"  ></option>
+                                                <option  style="background-color:#DCE391  " value="#DCE391" ></option>
+                                        </select>
+                                            <button type="submit" style="background-color: {{i.for_color}};">Save</button>
+                                            </center>
+                                        </form>
+                                     </ul>
+
+                               </div>
+
+                                             <!--Archive-->
+
+                                <div >
+                                     <a href="{% url 'is_archived' i.id %}" role="button"   class="btn" style="margin-left:100px;margin-bottom:60px;" data-toggle="tooltip" data-placement="bottom" title="Archive">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" id="archive">
+                                                    <path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM6.24 5h11.52l.83 1H5.42l.82-1zM5 19V8h14v11H5zm11-5.5l-4 4-4-4 1.41-1.41L11 13.67V10h2v3.67l1.59-1.59L16 13.5z"></path>
+                                                    </svg></a>
+                                </div>
+
+                 {% for l in all_map %}
+                    {% if l.note_id == i.id %}
+                 <!--<span class="badge" style="margin-top: -320px;">{{l.label_id}} </span>-->
+                 <span class="tag label badge" style="margin-top: -320px;height:23px;">
+                          <span>{{l.label_id}}</span>
+                          <a href="{% url 'remove_labels' i.id l.label_id_id %}"><i class="remove glyphicon glyphicon-remove-sign glyphicon-white"></i></a>
+                        </span>
+                    {% endif %}
+
+
+                 {% endfor %}
+
+            <!--Reminder Badge-->
+                 {% if i.reminder != None%}
+                 <span class="badge" style="margin-top: -250px;margin-left:-18px;" >{{i.reminder}}
+                    </span>
+                 {% endif %}
+
+
+
+                  <!--More Options-->
+                 <div class="dropdown  show dropleft" style="top:-150px;margin-left:25px;" >
+                        <a class="btn-xs   dropdown-toggle" href="#" id="dropdownMenuLink" data-toggle="dropdown"  style="margin-left:140px;width:20px;">
+                            <span class="glyphicon glyphicon-option-vertical" style="margin-left:150px;width:2px;top:-17px"></span>
+                          </a>
+                            <ul class="dropdown-menu dropleft">
+                                 <a class="dropdown-item" href="{% url 'copy_note' i.id %}" style="margin-left:0px;">Copy note</a>
+                                <a class="dropdown-item" href="{% url 'move_to_trash' i.id %}" style="margin-left:0px;width:20;">Trash</a>
+                            <a class="dropdown-item" href="{% url 'updatenote' i.id %}" style="margin-left:0px;">Update</a>
+                            <a class="dropdown-item" href="{% url 'updateform' i.id %}" style="margin-left:0px;">New Update</a>
+                              <a class="dropdown-item" href="{% url 'delete_forever' i.id %}" style="margin-left:0px;">Delete Forever</a>
+
+
+
+                                <!--Add labels-->
+
+
+                              <li class="dropdown-submenu "  >
+                                <a class="test"  href="#" style="margin-left:0px;">Add Label</a>
+                                <ul class="dropdown-menu">
+                                    {% for k in labels %}
+
+                                    <li><input type="checkbox"  name="labels" id="label_check"  onclick="addLabel(this,{{i.id}},{{k.id}},{{user.id}})" >{{k}}</li>
+                                    {% endfor %}
+
+                                </ul>
+                              </li>
+                            </ul>
+                 </div>
+        <!--</div>-->
+            </article>
+    </div>
+</center>
+    {% endfor %}
+
+</body>
+
+
+
+<script>
+$(document).ready(function(){
+
+  $('.dropdown-submenu a.test').on("click", function(e){
+    $(this).next('ul').toggle();
+    e.stopPropagation();
+    e.preventDefault();
+    console.log("toggle");
+  });
+});
+</script>
+
+<script>
+$(document).ready(function(){
+
+  $('#menu-toggle').on("click", function(e){
+    $(this).parent().next('ul').toggle();
+
+    <!--console.log("toggle button clicked");-->
+    <!--console.log($(this).next('ul'));-->
+     $(this).parent().next('#wrapper').toggle();
+    e.stopPropagation();
+    e.preventDefault();
+
+  });
+});
+</script>
+<script>
+$(document).ready(function(){
+$('#menu-toggle').click(function(e) {
+// e.preventDefault();
+console.log(e);
+console.log("button clicked");
+$("#wrapper").toggleClass("active");
+/* alert(1);*/
+});
+});
+
+
+
+</script>
+
+<script>
+$("article").click(function(){
+
+  var id = this.id;
+  $('#modal-text').val(id).text();
+  $('#form').attr('s',id);
+  <!--console.log(id);-->
+  var a=$('#text_box1').val();
+  var b=$('#text_area1').val();
+  <!--console.log("before");-->
+  <!--console.log(a,a);-->
+  <!--console.log($('p').text());-->
+  console.log($('#text_box1').text());
+  console.log($ ('#text_area1').text());
+  <!--$(this).('#text_box1').text();-->
+
+  <!--console.log("after");-->
+  $('#pk_note').val(id).text();
+
+});
+</script>
+
+<script type="text/javascript">
+function changeColor(clicked_id)
+{
+
+    var color_id=clicked_id
+    $('#add_note').css('background-color', clicked_id);
+    $('#title').css('background-color', clicked_id);
+    $('#description').css('background-color', clicked_id);
+
+    $('#for_color').val(clicked_id);
+
+}
+</script>
+
+
+<!--Script to get data with JqueryAjax-->
+
+<script>
+$(document).ready(function(){
+    var token = localStorage.getItem('token');
+    $.ajax({
+    type: 'GET',
+    url: "http://127.0.0.1:8000/getnotes/",
+    headers: {
+        "Authorization":token
+    }
+
+}).done(function(data) {
+    <!--console.log(data);-->
+});
+});
+</script>
+
+<script>
+    $(function(){
+        $('#search').keyup(function(){
+            $.ajax({
+                async: true,
+                type:"POST",
+                url:"/search/",
+                data:{
+                    'search_text':$('#search').val(),
+                    'csrfmiddlewaretoken':$("input[name=csrfmiddlewaretoken]").val()
+                },
+                success:searchSuccess,
+                dataType:'html'
+            });
+        });
+    });
+function searchSuccess(data,testStatus,jqXHR)
+{
+
+    $('.demo').hide();
+    $('#add_note').hide();
+    $('#add_note').hide();
+    $("hr").hide();
+    $('.panel-body').hide();
+    <!--$('#title').hide();-->
+    <!--$('#description').hide();-->
+
+    $('#search-results').html(data);
+
+
+    <!--$('.wapper_forNote').hide();-->
+     $('#pagination').hide();
+    <!--var dataArray = data;-->
+
+    <!--var testList=$("<ul></ul>");-->
+
+
+    <!--for (var i=0; i<dataArray.length; i++) {-->
+    <!--console.log(data[i]['title']);-->
+<!--}-->
+
+      <!--&lt;!&ndash;$(testList).append("<b>Reminders for coming two days</b><br>");&ndash;&gt;-->
+    <!--for(i=0;i<dataArray.length;i++){-->
+
+        <!--$(testList).append($("<br><li></li>").text(dataArray[i].title));-->
+        <!--&lt;!&ndash;$('#ac').val(dataArray[i].title);&ndash;&gt;-->
+    <!--}-->
+    <!--$('#new_div').html(testList);-->
+
+     <!--&lt;!&ndash;$('#new_div').html(data);&ndash;&gt;-->
+
+
+}
+</script>
+
+
+<!--date picker-->
+<script type="text/javascript">
+$( document ).ready(function() {
+    $('#datetimepicker1').datepicker({
+        dateFormat: 'yy-mm-dd' ,
+        autoclose: true,
+        todayHighlight: true
+  }).datepicker('update', new Date());
+});
+</script>
+
+<script type="text/javascript">
+$( document ).ready(function() {
+    $('#datetimepicker2').datepicker({
+        dateFormat: 'yy-mm-dd' ,
+        autoclose: true,
+        todayHighlight: true
+  }).datepicker('update', new Date());
+});
+</script>
+<!--Script to show reminders as notifications-->
+<script>
+    $(document).ready(function(){
+    $.ajax({
+        type: 'GET',
+        url: "http://127.0.0.1:8000/reminder/",
+
+
+}).done(function(data) {
+    <!--console.log(data);-->
+    var d=data
+    console.log(d);
+     <!--$('#ac').html(d);-->
+     var testList=$("<ul></ul>");
+      $(testList).append("<b>Reminders for coming two days</b><br>");
+    for(i=0;i<d.length;i++){
+        console.log(d[i].title);
+
+        $(testList).append($("<br><li></li>").text(d[i].title),(d[i].reminder));
+        $('#ac').val(d[i].title);
+    }
+    $('#here').html(testList);
+
+    });
+})
+
+</script>
+
+<script>
+    function addLabel(element,i_id,k_id,user_id)
+                    {
+                      <!--var label = $("input[name='labels']:checked").val()-->
+                        var token = localStorage.getItem('token');
+                       var pk =k_id
+                       var id = user_id
+                       var key = i_id
+                      console.log("Label id",pk);
+                      console.log("note Id",key);
+                      console.log("User Id",id);
+
+                      var checkbox = document.getElementById('label_check');
+                       console.log(checkbox);
+
+                       if (checkbox.checked != true)
+                      {
+                      console.log("inside check IF");
+
+                      $.ajax({
+
+                            type: 'POST',
+                            url: "http://127.0.0.1:8000/map_labels/",
+
+                            data: {
+
+                                'pk':pk,
+                                'id':user_id,
+                                'key':i_id,
+                                'csrfmiddlewaretoken': window.CSRF_TOKEN
+                              },
+
+                        }).done(function(data) {
+                            console.log(data);
+                        });
+
+                      }
+}
+</script>
+<script type="text/javascript">
+$(document).ready(function(){
+    $('[data-toggle="tooltip"]').tooltip();
+});
+</script>
+<script>
+    $(document).ready(function(){
+
+   $('#col3_btn').click(function () {
+                  $(".card-columns").css("column-count", "3");
+
+                 <!--for Chrome, Safari, Opera -->
+                  $(".card-columns").css( "webkit-column-gap", "90px");
+
+                   <!--for Mozilla-->
+                  $(".card-columns").css( "moz-column-gap", "90px");
+
+
+
+                  $("#col3_btn").hide();
+                  $("#grid_list").show();
+
+   });
+   $('#grid_list').click(function () {
+               $(".card-columns").css("column-count", "1");
+               $("article" ).css("width", "150%");
+
+               $("#col3_btn").show();
+               $("#grid_list").hide();
+   });
+
+});
+
+
+</script>
+<script>
+$(document).ready(function(){
+    var token = localStorage.getItem('token');
+    $.ajax({
+    type: 'GET',
+    url: "http://127.0.0.1:8000/auto_delete_archive/",
+    headers: {
+        "Authorization":token
+    }
+
+}).done(function(data) {
+
+    console.log(data);
+});
+});
+</script>
+
+</html>
+
+
+
+

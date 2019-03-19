@@ -1,0 +1,17 @@
+{% include "baseT.html" %}
+{% load staticfiles %}
+{% block main %}
+
+<form method="POST" enctype="multipart/form-data" action="{% url 'updateNotes' note.id  %}">
+  Title:<input type="text" id="title" name="title" value="{{note.title}}"><br>
+    description:<input type="text" id="description" name="description" value="{{note.description}}"><br>
+
+    <!--created_time:<input type="text" id="ctime" name="ctime" value="{{note.created_time}}"><br>-->
+
+    remainder:<input type="text"  id="remainder" name="remainder" value="{{note.remainder}}"><br>
+  <!--User:<input type="text" id="colla" name="colla" ><br>-->
+  <input type="submit" />
+
+</form>
+{% endblock %}
+

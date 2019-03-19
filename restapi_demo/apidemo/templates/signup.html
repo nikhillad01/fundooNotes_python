@@ -1,0 +1,32 @@
+{% include "baseT.html" %}
+{% load staticfiles %}
+{% block content %}
+<center>
+   <div class="container">
+     <div class="row">
+        <div class="col-sm-9 col-md-7 col-lg-5 mx-auto">
+           <div class="card card-signin my-5">
+              <div class="card-body">
+                 <h3 class="card-title text-center">Sign Up</h3>
+                        <form method="post">
+                          {% csrf_token %}
+                          {% for field in form %}
+                          <p>
+                          {{ field.label_tag }}<br>
+                          {{ field }}
+                          {% for error in field.errors %}
+                          <p style="color: red">{{ error }}</p>
+                          {% endfor %}
+                          {% endfor %}
+                          <br><br>
+                          <button type="submit">Sign up</button>
+                          </form>
+        <a href="{% url 'login_v' %}">Already have an account ? Login here !</a><br><br>
+              </div>
+           </div>
+        </div>
+     </div>
+   </div>
+
+</center>
+{% endblock %}

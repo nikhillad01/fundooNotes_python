@@ -1,0 +1,54 @@
+{% include "baseT.html" %}
+{% load staticfiles %}
+{% block main %}
+<center>
+    {% if messages %}
+<p class="messages">
+    {% for message in messages %}
+    <p style="color:red;" {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</p>
+    {% endfor %}
+</p>
+{% endif %}
+    <div id="login">
+         <div class="container">
+              <div class="row">
+                   <div class="col-sm-9 col-md-7 col-lg-5 mx-auto">
+
+                        <div class="card card-signin my-5">
+                            <div class="card-body">
+                                <h5 class="card-title text-center">Sign In</h5>
+                                        <form class="form-horizontal" name="LoginForm" action="/user_login/" method="post">{% csrf_token %}
+
+
+                                        <div class="control-group">
+                                            <label class="control-label" for="username">Username</label>
+                                            <div class="controls">
+                                                <input  class="form-control" type="text" id="username" name="username"  placeholder="Username">
+                                            </div>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label"  for="password">Password</label>
+                                            <div class="controls">
+                                                <input type="password"  class="form-control" name="password" id="password" placeholder="Password">
+                                            </div>
+                                        </div>
+
+                                        <div class="control-group">
+            <div class="controls"><br>
+                <button type="submit" class="btn">Login</button>
+            </div>
+        </div>
+        </form>
+                            </div>
+                        </div>
+                   </div>
+              </div>
+         </div>
+    </div>
+
+    </div>                               
+    <a href="{% url 'signup' %}">Create account        </a>     <p>
+    <a href="{% url 'password_reset' %}">Forgot Password ?? click here to reset</a>
+</center>
+{% endblock %}
+

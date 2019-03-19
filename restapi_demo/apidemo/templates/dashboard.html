@@ -1,0 +1,71 @@
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+</head>
+{% block content %}
+{% for c in token %}
+<!--<h6>{{c}}</h6>-->
+{% endfor %}
+<!--<p>{{ token}}</p>-->
+
+{% endblock %}
+<script>
+localStorage.setItem('token', ("{{token}}"));
+
+</script>
+
+
+<a href="{% url 'logout' %}" class="btn btn-warning" role="button" style="float: right;">Logout</a>
+<center>
+    <h2>Welcome</h2>
+<!--{% if messages %}-->
+<!--<p class="messages">-->
+    <!--{% for message in messages %}-->
+    <!--<p style="color:green;" {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</p>-->
+    <!--{% endfor %}-->
+<!--</p>-->
+<!--{% endif %}-->
+<h3 style="color:green;">{{ user.username }}</h3>
+
+</center>
+<!--<script>var username={{ user.username }}</script>-->
+
+<title>Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<body>
+<!--<img src="https://s3.ap-south-1.amazonaws.com/fundoo/{{user.username }}.jpeg-->
+<!--" alt="no pic to display"/>-->
+<!-- Sidebar -->
+<div class="w3-sidebar w3-bar-block" style="display:none" id="mySidebar">
+  <button onclick="w3_close()" class="w3-bar-item w3-button w3-large">Close &times;</button>
+  <a href="{% url 'profile_page' %}" class="w3-bar-item w3-button">Profile</a>
+</div>
+
+<!-- Page Content -->
+<div class="w3-teal">
+  <button class="w3-button w3-teal w3-xlarge" onclick="w3_open()">☰</button>
+  <div class="w3-container">
+    <h1>Fundoo</h1>
+  </div>
+</div>
+
+
+
+
+<script>
+function w3_open() {
+  document.getElementById("mySidebar").style.width = "100%";
+  document.getElementById("mySidebar").style.display = "block";
+}
+
+function w3_close() {
+  document.getElementById("mySidebar").style.display = "none";
+}
+</script>
+
+</body>
+</html>

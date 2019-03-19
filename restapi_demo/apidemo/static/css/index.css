@@ -1,0 +1,26 @@
+body {
+ background : url("/static/preview-1024x576.png");
+ background-size: 1500px;
+}
+h1{
+font-family: 'Sofia';font-size: 50px;
+}
+a:link {
+  color: red;
+  display: inline-block;
+}
+
+/* visited link */
+a:visited {
+  color: maroon;
+}
+
+/* mouse over link */
+a:hover {
+  color: hotpink;
+}
+
+/* selected link */
+a:active {
+  color: blue;
+}

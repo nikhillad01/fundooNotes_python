@@ -1,0 +1,15 @@
+{% load staticfiles %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/index.css' %}" />
+<link href='https://fonts.googleapis.com/css?family=Sofia' rel='stylesheet'>
+<title>Index</title>
+{#  Main HomePage contain links for login and registration #}
+{% block content %}
+<center>
+    <h1>Welcome</h1><br><br>
+
+    <b><a href="{% url 'signup' %}">Click Here to register !</a><br><br>
+    <a href="{% url 'login_v' %}">Login</a><br><br>
+
+
+</center>
+{% endblock %}

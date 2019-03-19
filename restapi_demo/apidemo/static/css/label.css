@@ -1,0 +1,98 @@
+#label-card{
+    height: auto;
+    width: 65%;
+    margin-top: 155px;
+    margin-left: 138px;
+}
+}
+}
+
+#label-btn{
+    margin-left: 4px;
+    margin-top: 3px;
+    background: #fcf8e3;
+    width: 88px;
+}
+
+.seprator{
+    border-top:1px solid #c1bbbb;
+    margin-top: 1px;
+    margin-bottom: 4px;
+}
+
+#divider{
+    margin-top: -13px;
+    margin-left: -247px;
+    border-top:1px solid #c1bbbb;
+}
+
+.group 			  {
+    position: relative;
+    margin-bottom: 45px;
+    margin-left: 19px;
+    margin-right: 94px;
+}
+
+.label-txt-input{
+    font-size: 18px;
+
+    display: block;
+    width: 246px;
+    border: none;
+    border-bottom: 1px solid #757575;
+}
+input:focus 		{ outline:none; }
+
+/* active state */
+input:focus ~ .highlight {
+  -webkit-animation:inputHighlighter 0.3s ease;
+  -moz-animation:inputHighlighter 0.3s ease;
+  animation:inputHighlighter 0.3s ease;
+}
+
+/* ANIMATIONS ================ */
+@-webkit-keyframes inputHighlighter {
+	from { background:#5264AE; }
+  to 	{ width:0; background:transparent; }
+}
+@-moz-keyframes inputHighlighter {
+	from { background:#5264AE; }
+  to 	{ width:0; background:transparent; }
+}
+/*@keyframes inputHighlighter {
+	from { background:#5264AE; }
+  to 	{ width:0; background:transparent; }
+}*/
+
+#delete-label-btn{
+    margin-right: 314px;
+    margin-top: 7px;
+    font-size: 26px;
+    margin-bottom: -17px;
+    color: gray;
+}
+#ok-btn{
+    background-color: white;
+    border: none;
+    color: gray;
+    box-shadow: none;
+    margin-left: 283px;
+    margin-top: -127px;
+}
+.label-btn-done{
+   background: transparent;
+    border: none;
+    margin-left: 263px;
+    width: 72px;
+    height: 33px;
+}
+
+#new-label{
+    margin-left: 51px;
+    margin-top: -60px;
+}
+.label-list{
+    line-height: 0px;
+    margin-top: -3px;
+    margin-bottom: -15px;
+}

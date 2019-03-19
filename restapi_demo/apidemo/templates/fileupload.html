@@ -1,0 +1,6 @@
+{% block content %}
+<form method="post" enctype="multipart/form-data" action="{% url 'upload_profile' %}">
+  <input type="file" name="pic" />
+  <input type="submit" />
+</form>
+{% endblock %}

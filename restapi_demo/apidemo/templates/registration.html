@@ -1,0 +1,26 @@
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script>
+$('#password, #confirm_password').on('keyup', function () {
+  if ($('#password').val() == $('#confirm_password').val()) {
+    $('#message').html('Matching').css('color', 'green');
+  } else
+    $('#message').html('Not Matching').css('color', 'red');
+});
+$.ajax({
+
+})
+
+</script>
+{% block content %}
+
+<form  method="POST">{% csrf_token %}
+
+
+    <!--username: <input type="text" id="uname">-->
+    <!--pass:   <input type="password" id="pass">-->
+    <!--confirm pass : <input type="password" id="cpass">-->
+    {{ form.as_p }}
+    <input type="submit" value="Submit" id="submit" />
+</form>
+{% endblock %}
