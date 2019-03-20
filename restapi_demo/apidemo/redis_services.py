@@ -48,6 +48,7 @@ class redis_info:
         def flush_all(self):
             try:
                 r.flushall(asynchronous=False)         # deletes all data from redis cache
+
             except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception):
                 return print({"message": "Something bad happened"})
     except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
