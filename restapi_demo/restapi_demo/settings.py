@@ -114,8 +114,8 @@ DATABASES = {
         'NAME': 'demo',
         'USER': 'admin',
         'PASSWORD': '123',
-        'HOST': 'localhost',
-        'PORT': '',
+        'HOST': '13.233.224.92',
+        'PORT': '5432',
     }
 }
 
