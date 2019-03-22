@@ -7,6 +7,7 @@
 from django.contrib import messages, auth
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -1416,6 +1417,6 @@ def delete_from_s3(request):
         res['success']=True
         messages.error(request, message=res['message'])
         return redirect(reverse('getnotes'))
-    except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) :
+    except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception, ObjectDoesNotExist):
         messages.error(request, message=res['message'])
         return redirect(reverse('getnotes'))
