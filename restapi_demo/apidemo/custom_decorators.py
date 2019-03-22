@@ -43,5 +43,6 @@ def custom_login_required(function=None,login_url =''):
 
 
     except (ObjectDoesNotExist,AttributeError ,Exception) as e:
-        print(e)
+        print('exception occurs',e)
+
         return redirect(reverse('login_v'))

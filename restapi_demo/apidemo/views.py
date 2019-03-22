@@ -6,7 +6,7 @@
 """
 from django.contrib import messages, auth
 from django.contrib.auth.decorators import login_required
-from django.contrib.sites.models import Site
+# from django.contrib.sites.models import Site
 from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -45,7 +45,7 @@ from django.db.models import Q
 import datetime
 from .cloud_services import  s3_services
 
-current_site = Site.objects.get_current()
+# current_site = Site.objects.get_current()
 
 
 def index(request):         # this is homepage.1
@@ -73,6 +73,18 @@ def base(request):
 
 def open_upload_form(request):
     return render(request, 'fileupload.html', {})
+
+def get_token(key):
+    try:
+        if key:
+
+            token = redis_info.get_token(self, key)  # gets the token from redis cache
+            token = token.decode(encoding='utf-8')  # decodes the token ( from Bytes to str )
+            decoded_token = jwt.decode(token, 'secret_key', algorithms=['HS256'])
+            return decoded_token
+
+    except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+        print(e)
 
 User= get_user_model()          # will retrieve the USER model class.
 
@@ -120,6 +132,9 @@ class LoginView(APIView):
 
 def Signup(request):
     try:
+
+        # print(request.META.get('HTTP_HOST'))
+        # print(request.scheme)
         if request.method == 'POST':
             form = SignupForm(request.POST)
             if form.is_valid():
@@ -129,7 +144,7 @@ def Signup(request):
                 data = {                        # renders to html with variables
                     #"urlsafe_base64_encode" takes user id and generates the base64 code(uidb64).
                     'user': user,
-                    'domain': current_site.domain,
+                    'domain': request.META.get('HTTP_HOST'), #current_site.domain,
                     #'uid': urlsafe_base64_encode(force_bytes(user.pk)),    # encodes
                     'uid': urlsafe_base64_encode(force_bytes(user.pk)).decode(),  # coz django 2.0.0 to convert it to string
                     'token': account_activation_token.make_token(user),  # creates a token
@@ -244,6 +259,25 @@ def crop(request):
     except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
         print(e)
 
+@custom_login_required
+def delete_from_s3(request):
+    res = {
+        'message': 'Something Bad Happened',  # Response Data
+        'data': {},
+        'success': False
+    }
+    try:
+        token = get_token(key='token')
+
+        s3_services.delete_object_from_s3(request, token['username'])  # calls the method from services to delete object from s3 with a key
+
+        res['message']="deleted successfully"
+        res['success']=True
+        messages.error(request, message=res['message'])
+        return redirect(reverse('getnotes'))
+    except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) :
+        messages.error(request, message=res['message'])
+        return redirect(reverse('getnotes'))
 
 
 def photo_list(request):
@@ -554,8 +588,11 @@ def get_all_labels(user):
         if user:
             labels = Labels.objects.filter(user=user).order_by('-created_time')
             return labels
+        # else:
+        #     return []
     except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
         print(e)
+        # return []
 
 
 def get_all_users(username):
@@ -770,7 +807,7 @@ class View_is_archived(View):
             res['message'] = "All Trash Notes"
             res['success'] = True
             res['data'] = notelist
-            #print(note_list)
+
             labels = get_all_labels(request.user)
             all_users = get_all_users(request.user.username)
             return render(request, 'in.html', {'notelist': note_list,'labels':labels,'all_users':all_users})
@@ -876,10 +913,9 @@ def view_notes_for_each_label(request, pk):
     try:
 
         if pk:            # if pk and id is not None.
-            token = redis_info.get_token(self, 'token')  # gets the token from redis cache
-            token = token.decode(encoding='utf-8')  # decodes the token from bytes to string
-            decoded_token = jwt.decode(token, 'secret_key', algorithms=['HS256'])  # decodes the JWT token
-            user = User.objects.get(username=decoded_token['username']).pk  # gets the PK of user from token's username
+            token = get_token(key='token')      # gets the token from redis cache
+
+            user = User.objects.get(username=token['username']).pk  # gets the PK of user from token's username
 
 
             label_id=pk         # sets the pk and id tp label and user id
@@ -964,10 +1000,8 @@ def remove_labels(request,id,key,*args,**kwargs):
 
     try:
         if id and key:      # if all details are provided
-            token = redis_info.get_token(self, 'token')  # gets the token from redis cache
-            token = token.decode(encoding='utf-8')  # decodes the token from bytes to string
-            decoded_token = jwt.decode(token, 'secret_key', algorithms=['HS256'])  # decodes the JWT token
-            user = User.objects.get(username=decoded_token['username']).pk  # gets the PK of user from token's username
+            token = get_token(key='token')      # gets the token from redis cache
+            user = User.objects.get(username=token['username']).pk  # gets the PK of user from token's username
 
             # gets the specific item .
 
@@ -1064,12 +1098,8 @@ def reminder(request):
     }
 
     try:
-            token = redis_info.get_token(self,'token')                  # gets the token from redis cache
-            token = token.decode(encoding='utf-8')                      # decodes the token ( from Bytes to str )
-            decoded_token = jwt.decode(token, 'secret_key',
-                                       algorithms=['HS256'])            # decodes JWT token and gets the values Username etc
-            user = User.objects.get(username=decoded_token['username']).pk  # gets the user from username
-
+            token = get_token(key='token')      # gets the token from redis cache
+            user = User.objects.get(username=token['username']).pk  # gets the user from username
                                                                         # if request made from User.
             items = Notes.objects.filter(user=user).values()    # Gets all notes  for particular user.
 
@@ -1124,7 +1154,7 @@ class Update(UpdateAPIView):        # UpdateAPIView DRF view , used for update o
 
         print(e)
 
-    #@method_decorator(custom_login_required)
+
     def post(self, request, pk):
         """ This method is used to update  and add collaborator from card """
 
@@ -1137,10 +1167,9 @@ class Update(UpdateAPIView):        # UpdateAPIView DRF view , used for update o
         try:
             if pk and request.data['collaborate']:
 
-                token = redis_info.get_token(self,'token')
-                token = token.decode(encoding='utf-8')
-                decoded_token = jwt.decode(token, 'secret_key', algorithms=['HS256'])
-                logged_in_user = User.objects.get(username=decoded_token['username'])
+                token = get_token(key='token')      # gets the token from redis cache
+
+                logged_in_user = User.objects.get(username=token['username'])
 
                 item = Notes.objects.get(id=pk)     # gets the Note
                 collab = request.data['collaborate']    # gets the user if to collaborate
@@ -1163,7 +1192,7 @@ class Update(UpdateAPIView):        # UpdateAPIView DRF view , used for update o
 
                     data = {
                         'note_sender': logged_in_user,
-                        'domain':current_site.domain,
+                        'domain':request.META.get('HTTP_HOST'),
                     }
 
                     message = render_to_string('Notes/collaborate_notification.html', data)
@@ -1183,17 +1212,6 @@ class Update(UpdateAPIView):        # UpdateAPIView DRF view , used for update o
             messages.error(request, message=res['message'])
             return render(request, 'in.html', {})
 
-def get_token(key):
-    try:
-        if key:
-
-            token = redis_info.get_token(self, key)  # gets the token from redis cache
-            token = token.decode(encoding='utf-8')  # decodes the token ( from Bytes to str )
-            decoded_token = jwt.decode(token, 'secret_key', algorithms=['HS256'])
-            return decoded_token
-
-    except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
-        print(e)
 
 class View_reminder(View):
 
@@ -1220,12 +1238,10 @@ class View_reminder(View):
 
 
         try:
-                token = get_token(key='token')
+                token = get_token(key='token')      # gets the token from redis cache
 
 
-                # token = redis_info.get_token(self,'token')          # gets the token from redis cache
-                # token = token.decode(encoding='utf-8')  # decodes the token ( from Bytes to str )
-                # decoded_token = jwt.decode(token, 'secret_key', algorithms=['HS256'])   # decodes JWT token and gets the values Username etc
+
                 user = User.objects.get(username=token['username']).pk          # gets the user from username
 
 
@@ -1293,10 +1309,9 @@ def auto_delete_archive(request):
 
     try:
 
-        token = redis_info.get_token(self,'token')      # gets the token from redis cache
-        token=token.decode(encoding='utf-8')            # decodes the token from bytes to string
-        decoded_token=jwt.decode(token, 'secret_key', algorithms=['HS256'])     # decodes the JWT token
-        user=User.objects.get(username=decoded_token['username']).pk        # gets the PK of user from token's username
+        token = get_token(key='token')     # gets the token from redis cache
+
+        user=User.objects.get(username=token['username']).pk        # gets the PK of user from token's username
 
 
 
@@ -1361,17 +1376,14 @@ def invite(request):
     try:
         if request.POST['email']:
 
-            token = redis_info.get_token(self,'token')
-            token = token.decode(encoding='utf-8')
-            decoded_token = jwt.decode(token, 'secret_key', algorithms=['HS256'])
-            user = User.objects.get(username=decoded_token['username'])
-
+            token = get_token(key='token')
+            user = User.objects.get(username=token['username'])
 
             email_user=request.POST['email']        # gets the email
 
             data = {
                 'user': user,
-                'domain': current_site.domain,
+                'domain': request.META.get('HTTP_HOST'),
             }
 
             message = render_to_string('invite.html', data)
@@ -1397,25 +1409,3 @@ def invite(request):
 
 
 
-@custom_login_required
-def delete_from_s3(request):
-    res = {
-        'message': 'Something Bad Happened',  # Response Data
-        'data': {},
-        'success': False
-    }
-    try:
-        token = redis_info.get_token(self, 'token')
-        token = token.decode(encoding='utf-8')
-        decoded_token = jwt.decode(token, 'secret_key', algorithms=['HS256'])
-        user = User.objects.get(username=decoded_token['username'])
-
-        s3_services.delete_object_from_s3(request, decoded_token['username'])  # calls the method from services to delete object from s3 with a key
-
-        res['message']="deleted successfully"
-        res['success']=True
-        messages.error(request, message=res['message'])
-        return redirect(reverse('getnotes'))
-    except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) :
-        messages.error(request, message=res['message'])
-        return redirect(reverse('getnotes'))

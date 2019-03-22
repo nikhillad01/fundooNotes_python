@@ -105,7 +105,7 @@ class PhotoForm(forms.ModelForm):
         try:
             image_file = super(PhotoForm, self)
             if not image_file.name.endswith(".png",".jpeg",".jpg"):
-                #raise forms.ValidationError("Only .jpeg image accepted")
+
                 messages.error(request, 'Please select valid file')
                 return redirect('photo_list')
             return image_file

@@ -42,6 +42,14 @@ AUTHENTICATION_BACKENDS = (
 # Application definition
 
 INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'django.contrib.sites',
+
     'rest_framework',
     'rest_framework.authtoken',
     'rest_auth',
@@ -51,14 +59,6 @@ INSTALLED_APPS = [
     'crispy_forms',
     'apidemo',
     'rest_framework.authentication',
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django.contrib.sites',
-
 ]
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -186,4 +186,4 @@ JWT_AUTH = {
 
 }
 
-LOGIN_URL = '/login_v'
+LOGIN_URL = ''
