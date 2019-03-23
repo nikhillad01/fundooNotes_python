@@ -3,7 +3,8 @@ from django.contrib import admin
 from django.urls import path, include
 from apidemo import views
 from django.contrib.auth import views as auth_views
-
+from rest_framework_swagger.views import get_swagger_view
+schema_view = get_swagger_view(title='fundooNotes')
 urlpatterns = [
 
     #Admin Panel and Index.
@@ -139,6 +140,10 @@ urlpatterns = [
 
     #delete_from_s3
     path('delete_from_s3/', views.delete_from_s3, name='delete_from_s3'),
+
+    url(r'^swagger/$', schema_view),
+    #delete_collaborator
+    path('delete_collaborator',views.delete_collaborator.as_view(),name='delete_collaborator'),
 ]
 
 

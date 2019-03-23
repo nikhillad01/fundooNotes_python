@@ -85,7 +85,7 @@ class TokenAuthentication(BaseAuthentication, serializers.ModelSerializer):  # p
         def authenticate_header(self, request,token):
             return token
 
-class LoginDemoWithRest(serializers.ModelSerializer):
+class LoginDemoWithRest(serializers.Serializer):
     username = serializers.CharField(max_length=20)
     password = serializers.CharField(style={'input_type': 'password'})
 
@@ -96,5 +96,12 @@ class NoteSerializer(serializers.ModelSerializer):
 
 	class Meta:
 		model = Notes
-		fields = ('title','description','is_archived','reminder','trash','user','for_color','is_pinned','collaborate')
+		fields = ('title', 'description', 'is_archived', 'reminder', 'trash', 'user', 'for_color', 'is_pinned', 'collaborate')
+
+
+class delete_collaborator_serializer(serializers.Serializer):
+    user_id = serializers.IntegerField()
+    note_id = serializers.IntegerField()
+
+
 
