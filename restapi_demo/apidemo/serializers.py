@@ -104,4 +104,15 @@ class delete_collaborator_serializer(serializers.Serializer):
     note_id = serializers.IntegerField()
 
 
+class get_single_data(serializers.Serializer):
+    note_id=serializers.IntegerField()
+    user_id=serializers.IntegerField()
 
+class delete_single_data_by_id(serializers.Serializer):
+    id=serializers.IntegerField()
+
+class add_label_serializer(serializers.Serializer):
+    label_name=serializers.CharField(max_length=20)
+
+class map_label_serializer(serializers.Serializer):
+    label_name=serializers.CharField(default=None,allow_null=True)

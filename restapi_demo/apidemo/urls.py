@@ -142,8 +142,42 @@ urlpatterns = [
     path('delete_from_s3/', views.delete_from_s3, name='delete_from_s3'),
 
     url(r'^swagger/$', schema_view),
+
+
+
+    # REST API's
     #delete_collaborator
-    path('delete_collaborator',views.delete_collaborator.as_view(),name='delete_collaborator'),
+    path('delete_collaborator/<int:user_id>/<int:note_id>/',views.delete_collaborator.as_view(),name='delete_collaborator'),
+
+    #get_single_note
+    path('get_data_by_id/<int:pk>/', views.get_data_by_id.as_view(), name='get_data_by_id'),
+
+    #delete_note_by_id
+    path('delete_note_by_id/<int:pk>/', views.delete_note_by_id.as_view(), name='delete_note_by_id'),
+
+    #add_label
+    path('add_label/<int:pk>/', views.add_label.as_view(), name='add_label'),
+
+    #delete_created_label
+    path('delete_created_label/<int:pk>/', views.delete_created_label.as_view(), name='delete_created_label'),
+
+    #map_label_with_note
+    path('map_label_with_note/<int:user_id>/<int:note_id>/<int:label_id>/', views.map_label_with_note.as_view(),
+         name='map_label_with_note'),
+
+    #update_label
+    path('update_label/<int:label_id>/<int:user_id>/', views.update_label.as_view(), name='update_label'),
+
+    #get_noteLabel_list
+    path('get_noteLabel_list/<int:note_id>/', views.get_noteLabel_list.as_view(), name='get_noteLabel_list'),
+
+    #get_colaborator_for_note
+    path('get_colaborator_for_note/<int:note_id>/', views.get_colaborator_for_note.as_view(), name='get_colaborator_for_note'),
+
+    #get_notes_of_label
+    path('get_notes_of_label/<int:label_id>/', views.get_notes_of_label.as_view(),
+         name='get_notes_of_label'),
+
 ]
 
 

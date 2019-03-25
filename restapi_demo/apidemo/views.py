@@ -4,6 +4,8 @@
 * @version: 3.7
 * @since: 01-1-2019
 """
+import json
+
 from django.contrib import messages, auth
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
@@ -31,9 +33,11 @@ from django.contrib.auth.models import User
 from django.core.mail import EmailMessage
 from django.contrib.auth import get_user_model, authenticate
 import jwt
-from .serializers import TokenAuthentication, delete_collaborator_serializer,  LoginDemoWithRest
+from .serializers import TokenAuthentication, delete_collaborator_serializer, LoginDemoWithRest, get_single_data, \
+    delete_single_data_by_id, add_label_serializer, map_label_serializer
 from .serializers import registrationSerializer
-from rest_framework.generics import CreateAPIView, UpdateAPIView, DestroyAPIView, ListCreateAPIView
+from rest_framework.generics import CreateAPIView, UpdateAPIView, DestroyAPIView, ListCreateAPIView, ListAPIView, \
+    RetrieveAPIView, RetrieveDestroyAPIView, RetrieveUpdateDestroyAPIView
 from .forms import PhotoForm
 from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
@@ -83,36 +87,40 @@ class UserCreateAPI(CreateAPIView):             # Registration using Rest framew
 
 class LoginView(ListCreateAPIView):
 
-    #serializer_class = TokenAuthentication
+
     serializer_class=LoginDemoWithRest
     queryset = User.objects.all()
     http_method_names = ['post', 'get']      # to use POST method by default it was using GET.
-
+    #method_decorator(require_POST)
+    res = {
+        'message': 'Something bad happened',
+        'data': {},
+        'success': False
+    }
     def post(self, request):
         try:
-            if request.method == 'POST':
+
                 username = request.data['username']
                 password = request.data['password']
-                print(username,password)
+                # print(username,password)
                 user = authenticate(username=username, password=password)
                 if user:
                     if user.is_active:
                         payload = {'username': username,        # creates token using Payload.
                                     'password': password, }
                         jwt_token = {'token': jwt.encode(payload, "secret_key", algorithm='HS256')}
-                        return HttpResponse(        # returns token as response with success status code.
-                         jwt_token.values(),
-                            status=200,
-                            content_type="application/json"
-                        )
+                        token=jwt_token['token'].decode(encoding='utf-8')
+
+                        return JsonResponse({'token':token},safe=False)      # returns token as response with success status code.
+
+
                     else:
                         return HttpResponse("Your account was inactive.")
                 else:
                         print("Someone tried to login and failed.")
                         print("They used username: {} and password: {}".format(username, password))
                         return HttpResponse("Invalid login details given")
-            else:
-                return render(request, 'dashboard.html', {})
+
         except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
             print(e)
             return render(request, 'dashboard.html', {})
@@ -355,7 +363,7 @@ class AddNote(CreateAPIView):   # CreateAPIView used for create only operations.
 
 
 
-class getnotes(View):
+class getnotes(RetrieveAPIView):
     method_decorator(custom_login_required)
     def get(self, request):
 
@@ -376,13 +384,14 @@ class getnotes(View):
 
         try:
                # gets all the note and sort by created time
-            note_list = Notes.objects.filter(user=request.user,trash=False,is_archived=False,).values().order_by('-created_time')   # shows note only added by specific user.
+            token=get_token('token')
+            user=User.objects.get(username=token['username'])
 
-            new_note_list = Notes.objects.filter(user=request.user, trash=False, is_archived=False).values('title',
-                                                                                                          'description',
-                                                                                                       'is_pinned','collaborate').order_by(
-                                                                                                         '-created_time')  # shows note only added by specific user.
+            note_list = Notes.objects.filter(user_id=user.id,trash=False,is_archived=False,).values().order_by('-created_time')   # shows note only added by specific user.
 
+            new_note_list = Notes.objects.filter(user_id=user.id, trash=False, is_archived=False).values('title',
+                                                                                                           'description',
+                                                                                                                  )  # shows note only added by specific user.
             stores_id_note = []
             for i in note_list:
                 #i=json.dumps(i)
@@ -390,7 +399,7 @@ class getnotes(View):
             collaborators_to_note=Notes.collaborate.through.objects.filter(notes_id__in=stores_id_note).values()
 
 
-            items=Notes.collaborate.through.objects.filter(user_id=request.user).values()
+            items=Notes.collaborate.through.objects.filter(user_id=user.id).values()
 
             collab=[]
             for i in items:
@@ -402,7 +411,7 @@ class getnotes(View):
             merged=note_list | collab_notes
 
 
-            labels = Labels.objects.filter(user=request.user).order_by('-created_time')
+            labels = Labels.objects.filter(user=user.id).order_by('-created_time')
 
             paginator = Paginator(merged, 9)          # Show 9 contacts per page
             page = request.GET.get('page')
@@ -421,16 +430,20 @@ class getnotes(View):
             all_labels=Labels.objects.all()
             all_map=Map_labels.objects.all()
 
-            all_users=User.objects.filter(~Q(username=request.user.username)).values('username','id')
+            all_users=User.objects.filter(~Q(username=token['username'])).values('username','id')
                # returns list of all user except the one who is requesting it .
 
 
+            allnotes=[]
+            for i in note_list:
+                allnotes.append(i)
 
-
+            #return JsonResponse(allnotes,safe=False)
             return render(request, 'in.html', {'notelist': notelist,'labels':labels,'all_labels':all_labels,'all_map':all_map,'all_users':all_users,'collaborators_to_note': collaborators_to_note})
 
-        except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+        except (Notes.DoesNotExist, Labels.DoesNotExist, User.DoesNotExist, ObjectDoesNotExist,KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
             print(e)
+
 
 
 class updatenote(UpdateAPIView):
@@ -1224,12 +1237,7 @@ class Update(UpdateAPIView):        # UpdateAPIView DRF view , used for update o
             return JsonResponse({'mess':res['message']})
             # return render(request, 'in.html', {})
 
-class delete_collaborator(DestroyAPIView):
-    serializer_class =delete_collaborator_serializer #NoteSerializer#
-    def post(self, request):
-        item=Notes.collaborate.through.objects.get(user_id=request.data['collab_id'],notes_id=request.data['note_id'])
-        item.delete()
-        return JsonResponse({'success':True})
+
 
 
 def get_token(key):
@@ -1441,3 +1449,324 @@ def invite(request):
 
 
 
+# REST API's
+
+class get_data_by_id(RetrieveAPIView):
+
+        """This API is used to get a single instance data by ID(single note data or all notes by single user)
+            Parameter: ID
+            ListCreateAPIView: Used for read-write  operations  ,provides get and post method handlers"""
+
+        try:
+            serializer_class = get_single_data
+        except(ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception):
+            print('Serializer Error')
+
+        def post(self, request):
+            try:
+                res = {
+                    'message': 'No valid details provided',  # response information
+                    'data': {},
+                    'success': False
+                }
+                if request.data['note_id']:
+
+                    # checks if note id is passed
+
+                    item = Notes.objects.filter(id=request.data['note_id']).values()
+                    print('printing Note by ID')
+                    data = []
+                    for i in item:
+                        data.append(i)
+                    return JsonResponse({'Note Data': data}, safe=False)
+
+                elif request.data['user_id']:
+
+                    # checks if User id is passed
+
+                    print('printing Note by User')
+                    item = Notes.objects.filter(user_id=request.data['user_id']).values()
+                    data = []
+                    for i in item:
+                        data.append(i)
+                    return JsonResponse({'All notes by user': data}, safe=False)
+                else:
+                    return JsonResponse(res)
+
+            except (ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception):
+                return JsonResponse({'message': 'Something bad happened'})
+
+
+class delete_note_by_id(DestroyAPIView):
+    try:
+        serializer_class = delete_single_data_by_id
+        queryset = Notes.objects.all()
+    except (ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+        print(e)
+
+    def delete(self, request, pk):
+        try:
+            res = {  # Response information .
+                'message': 'Something bad happened',
+                'data': {},
+                'success': False
+            }
+            if pk:
+                note = Notes.objects.get(id=pk)
+                if note:
+                    note.delete()
+                    res['message'] = 'Note deleted successfully'
+                    res['success'] = True
+
+                    return JsonResponse(res)
+                else:
+                    res['message'] = 'Note not found for given ID'
+                    return JsonResponse(res)
+            else:
+                res['message'] = 'ID not provided'
+                return JsonResponse(res)
+        except (ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+            print(e)
+            return JsonResponse(res)
+
+
+class delete_collaborator(DestroyAPIView):
+
+    def delete(self, request, user_id, note_id):
+
+        res = {  # Response information .
+            'message': 'Something bad happened',
+            'data': {},
+            'success': False
+        }
+
+        try:
+            if user_id and note_id:
+                item = Notes.collaborate.through.objects.get(user_id=user_id, notes_id=note_id)
+                item.delete()
+                res['message'] = 'Collaborator Deleted successfully'
+                res['success'] = True
+                return JsonResponse(res)
+            else:
+                res['message'] = 'No valid details provided'
+                return JsonResponse(res)
+
+        except (Notes.DoesNotExist, ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+
+            res['message'] = str(e)
+            return JsonResponse(res)
+
+class add_label(CreateAPIView):
+
+    serializer_class = add_label_serializer
+    def post(self,request,pk):
+        res = {  # Response information .
+            'message': 'Something bad happened',
+            'data': {},
+            'success': False
+        }
+        try:
+
+            if pk and request.data['label_name']:
+                label=Labels.objects.create(user=User.objects.get(id=pk), label_name=request.data['label_name'])
+                label.save()
+                res['message'] = 'Label created successfully'
+                res['success'] = True
+
+                return JsonResponse(res)
+
+            else:
+                res['message'] = 'valid data not provided'
+                return JsonResponse(res)
+
+        except (Labels.DoesNotExist, ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+            print(e)
+            return JsonResponse(res)
+
+class delete_created_label(DestroyAPIView):
+    try:
+
+        queryset = Notes.objects.all()
+    except (ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+        print(e)
+
+    def delete(self, request, pk):
+        try:
+            res = {  # Response information .
+                'message': 'Something bad happened',
+                'data': {},
+                'success': False
+            }
+            if pk:
+                label = Labels.objects.get(id=pk)
+                if label:
+                    label.delete()
+                    res['message'] = 'Label deleted successfully'
+                    res['success'] = True
+
+                    return JsonResponse(res)
+                else:
+                    res['message'] = 'Label not found for given ID'
+                    return JsonResponse(res)
+            else:
+                res['message'] = 'ID not provided'
+                return JsonResponse(res)
+
+        except (Labels.DoesNotExist, ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+            print(e)
+            return JsonResponse(res)
+
+class map_label_with_note(CreateAPIView):
+    serializer_class =map_label_serializer
+    def post(self, request, note_id, user_id, label_id):
+        res = {  # Response information .
+            'message': 'Something bad happened',
+            'data': {},
+            'success': False
+        }
+        try:
+            if note_id and label_id and user_id:
+                mapped_instance=Map_labels.objects.create(note_id=note_id,user_id=user_id,label_id=Labels.objects.get(id=label_id))
+                mapped_instance.save()
+                res['message'] = 'Label mapped successfully'
+                res['success'] = True
+                return JsonResponse(res)
+            else:
+                res['message'] = 'No valid data provided '
+                return JsonResponse(res)
+
+        except (Map_labels.DoesNotExist, ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+            print(e)
+            return JsonResponse(res)
+
+class update_label(UpdateAPIView):
+    serializer_class = map_label_serializer
+    def post(self, request, label_id,user_id):
+
+        res = {  # Response information .
+            'message': 'Something bad happened',
+            'data': {},
+            'success': False
+        }
+        try:
+            if label_id and user_id:
+                label=Labels.objects.get(id=label_id,user_id=user_id)
+                label.label_name=request.data['label_name']
+                label.save()
+                res['message'] = 'Label Edited successfully'
+                res['success'] = True
+                return JsonResponse(res)
+            else:
+                res['message'] = 'No valid details provided'
+                return JsonResponse(res)
+        except (Labels.DoesNotExist, ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+            print(e)
+            return JsonResponse(res)
+
+class get_noteLabel_list(ListAPIView):
+    def get(self,request,note_id):
+        res = {  # Response information .
+            'message': 'Something bad happened',
+            'data': {},
+            'success': False
+        }
+        try:
+            if note_id:
+                labels=Map_labels.objects.filter(note_id=note_id).values()
+                if labels:
+                    data=[]
+                    for i in labels:
+                        data.append(i['label_id_id'])
+
+                    label_names=Labels.objects.filter(id__in=data).values('label_name')
+
+                    data=[]
+                    for i in label_names:
+                        data.append(i)
+                    res['message'] = 'All Labels for note'
+                    res['success']= True
+                    res['data']= data
+
+
+                    return JsonResponse(res)
+                else:
+                    res['message'] = 'Labels not found'
+                    return JsonResponse(res)
+
+
+            else:
+                res['message'] = 'No valid data provided'
+                return JsonResponse(res)
+
+        except (Map_labels.DoesNotExist, Labels.DoesNotExist, ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+            print(e)
+            return JsonResponse(res)
+
+class get_colaborator_for_note(ListAPIView):
+    def get(self, request, note_id):
+        res = {  # Response information .
+            'message': 'Something bad happened',
+            'data': {},
+            'success': False
+        }
+        try:
+            if note_id:
+                collaborators = Notes.collaborate.through.objects.filter(notes_id=int(note_id)).values('user_id')
+
+                data= []
+                for i in collaborators:
+                    data.append(i['user_id'])
+                collaborator_names= User.objects.filter(id__in=data).values('username')
+
+                data = []
+                for i in collaborator_names:
+                    data.append(i)
+                res['message']='Collaborators for Note'
+                res['data']= data
+                res['success']=True
+                return JsonResponse(res)
+            else:
+                res['message'] = 'No valid details provided'
+                return JsonResponse(res)
+
+        except (User.DoesNotExist, Notes.DoesNotExist, ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+            print(e)
+            return JsonResponse(res)
+
+class get_notes_of_label(ListAPIView):
+    def get(self, request, label_id):
+        res = {  # Response information .
+            'message': 'Something bad happened',
+            'data': {},
+            'success': False
+        }
+        try:
+            if label_id:
+                labels = Map_labels.objects.filter(label_id_id=label_id).values()
+                if labels:
+                    data = []
+                    for i in labels:
+                        data.append(i['note_id'])
+
+                    notes = Notes.objects.filter(id__in=data).values()
+
+                    data = []
+                    for i in notes:
+                        data.append(i)
+                    res['message'] = 'All notes for label'
+                    res['success'] = True
+                    res['data'] = data
+
+                    return JsonResponse(res)
+                else:
+                    res['message'] = 'Notes not found'
+                    return JsonResponse(res)
+
+
+            else:
+                res['message'] = 'No valid data provided'
+                return JsonResponse(res)
+
+        except (Map_labels.DoesNotExist, Labels.DoesNotExist, ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+            print(e)
+            return JsonResponse(res)

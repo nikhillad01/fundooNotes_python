@@ -22,7 +22,7 @@ import jwt
 def custom_login_required(function=None,login_url =''):
 
     try:
-        print('in try')
+
         def is_login(request):
             print('in method')
             token = redis_info.get_token(self,'token')  # gets the token from redis cache
