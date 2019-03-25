@@ -146,6 +146,9 @@ urlpatterns = [
 
 
     # REST API's
+
+
+
     #delete_collaborator
     path('delete_collaborator/<int:user_id>/<int:note_id>/',views.delete_collaborator.as_view(),name='delete_collaborator'),
 
@@ -178,6 +181,33 @@ urlpatterns = [
     path('get_notes_of_label/<int:label_id>/', views.get_notes_of_label.as_view(),
          name='get_notes_of_label'),
 
+    # make_note_archive
+    path('make_note_archive/<int:note_id>/', views.make_note_archive.as_view(),
+         name='make_note_archive'),
+
+
+    #make_note_trash
+    path('make_note_trash/<int:note_id>/', views.make_note_trash.as_view(),
+         name='make_note_trash'),
+    #note_pin_unpin
+    path('note_pin_unpin/<int:note_id>/', views.note_pin_unpin.as_view(),
+         name='note_pin_unpin'),
+
+    #view_archived_notes
+    path('view_archived_notes/<int:user_id>/', views.view_archived_notes.as_view(),
+         name='view_archived_notes'),
+    #view_trash_notes
+    path('view_trash_notes/<int:user_id>/', views.view_trash_notes.as_view(),
+         name='view_trash_notes'),
+    #view_pinned_notes
+    path('view_pinned_notes/<int:user_id>/', views.view_pinned_notes.as_view(),
+         name='view_pinned_notes'),
+    #update_details
+    path('update_details/<int:note_id>/', views.update_details.as_view(),
+         name='update_details'),
+    #reminder_notification
+    path('reminder_notification/', views.reminder_notification.as_view(),
+         name='reminder_notification'),
 ]
 
 

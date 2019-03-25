@@ -1,0 +1,10 @@
+
+{% autoescape off %}
+Hi ,
+
+reminder for note : {{title}},
+reminder date:{{reminder_date}}
+
+Check now !
+http://{{ domain }}{% url 'login_v' %}
+{% endautoescape %}

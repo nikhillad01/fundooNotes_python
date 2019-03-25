@@ -53,7 +53,7 @@ class Notes(models.Model):      # Model to Create Notes.
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owner', null=True, blank=True)
     archive_time= models.DateTimeField(blank=True,null=True)
     trash_time=models.DateTimeField(blank=True,null=True)
-
+    reminder_notification_flag=models.BooleanField(default=False,blank=True)
     def __str__(self):          # string Representation for model.
         return self.title
 

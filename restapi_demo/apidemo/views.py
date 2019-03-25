@@ -15,7 +15,7 @@ from django.views import View
 from django.views.decorators.http import require_POST
 from django.http import HttpResponsePermanentRedirect, HttpResponseRedirect, JsonResponse, request
 from django.urls import reverse
-from rest_framework.decorators import permission_classes
+from rest_framework.decorators import permission_classes, api_view
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -34,10 +34,10 @@ from django.core.mail import EmailMessage
 from django.contrib.auth import get_user_model, authenticate
 import jwt
 from .serializers import TokenAuthentication, delete_collaborator_serializer, LoginDemoWithRest, get_single_data, \
-    delete_single_data_by_id, add_label_serializer, map_label_serializer
+    delete_single_data_by_id, add_label_serializer, map_label_serializer, extra_functions, update_serializer
 from .serializers import registrationSerializer
 from rest_framework.generics import CreateAPIView, UpdateAPIView, DestroyAPIView, ListCreateAPIView, ListAPIView, \
-    RetrieveAPIView, RetrieveDestroyAPIView, RetrieveUpdateDestroyAPIView
+    RetrieveAPIView, RetrieveDestroyAPIView, RetrieveUpdateDestroyAPIView, RetrieveUpdateAPIView
 from .forms import PhotoForm
 from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
@@ -1164,78 +1164,7 @@ def reminder(request):
 
 
 
-class Update(UpdateAPIView):        # UpdateAPIView DRF view , used for update only operations.
 
-    """ This is Used for Collaborator From Card"""
-
-    try:
-        serializer_class = NoteSerializer
-
-    except (KeyboardInterrupt,MultiValueDictKeyError,Exception) as e:
-
-        print(e)
-
-
-    def post(self, request, pk):
-        """ This method is used to update  and add collaborator from card """
-
-        res = {
-            'message': 'No result found',  # Response Data
-            'data': {},
-            'success': False
-        }
-
-        try:
-            if pk and request.data['collaborate']:
-                print('in method')
-                token = get_token(key='token')      # gets the token from redis cache
-
-                logged_in_user = User.objects.get(username=token['username'])
-                print(logged_in_user)
-                item = Notes.objects.get(id=pk)     # gets the Note
-                collab = request.data['collaborate']    # gets the user if to collaborate
-                user = User.objects.get(id=collab)      # gets the user from ID
-                email_to_send=user.email
-
-                if Notes.collaborate.through.objects.filter(user_id=user, notes_id=item.id):
-
-                    """ Checks if collaborator is already attached to particular Note """
-
-                    res['message']="Collaborator Already Exists to this note"
-                    messages.success(request, message=res['message'])
-                    return JsonResponse({'success':False})
-                    #return redirect(reverse('getnotes'))
-
-                else:
-
-                    item.collaborate.add(user)
-                    item.save()
-                    res['message'] = "Collabrator added successfully"
-
-                    data = {
-                        'note_sender': logged_in_user,
-                        'domain': request.META.get('HTTP_HOST'),#current_site.domain,
-                    }
-
-                    message = render_to_string('Notes/collaborate_notification.html', data)
-                    mail_subject = 'shared a note with you'  # mail subject
-                    to_email = email_to_send  # mail id to be sent to
-                    email = EmailMessage(mail_subject, message,
-                                         to=[to_email])  # takes 3 args: 1. mail subject 2. message 3. mail id to send
-                    email.send()  # sends the mail
-                    messages.success(request, message=res['message'])
-                    return JsonResponse({'message':res['message']})
-                    #return redirect(reverse('getnotes'))
-
-            else:
-                messages.error(request, message=res['message'])
-                return JsonResponse({'message':res['message']})
-                #return redirect(reverse('getnotes'))
-
-        except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
-            messages.error(request, message=res['message'])
-            return JsonResponse({'mess':res['message']})
-            # return render(request, 'in.html', {})
 
 
 
@@ -1403,7 +1332,7 @@ def auto_delete_archive(request):
         print("Exception",e)
 
 
-
+#@api_view(['POST'])
 @custom_login_required
 @require_POST
 def invite(request):
@@ -1450,6 +1379,78 @@ def invite(request):
 
 
 # REST API's
+class Update(UpdateAPIView):        # UpdateAPIView DRF view , used for update only operations.
+
+    """ This is Used for Collaborator From Card"""
+
+    try:
+        serializer_class = NoteSerializer
+
+    except (KeyboardInterrupt,MultiValueDictKeyError,Exception) as e:
+
+        print(e)
+
+
+    def post(self, request, pk):
+        """ This method is used to update  and add collaborator from card """
+
+        res = {
+            'message': 'No result found',  # Response Data
+            'data': {},
+            'success': False
+        }
+
+        try:
+            if pk and request.data['collaborate']:
+                print('in method')
+                token = get_token(key='token')      # gets the token from redis cache
+
+                logged_in_user = User.objects.get(username=token['username'])
+                print(logged_in_user)
+                item = Notes.objects.get(id=pk)     # gets the Note
+                collab = request.data['collaborate']    # gets the user if to collaborate
+                user = User.objects.get(id=collab)      # gets the user from ID
+                email_to_send=user.email
+
+                if Notes.collaborate.through.objects.filter(user_id=user, notes_id=item.id):
+
+                    """ Checks if collaborator is already attached to particular Note """
+
+                    res['message']="Collaborator Already Exists to this note"
+                    messages.success(request, message=res['message'])
+                    return JsonResponse({'success':False})
+                    #return redirect(reverse('getnotes'))
+
+                else:
+
+                    item.collaborate.add(user)
+                    item.save()
+                    res['message'] = "Collabrator added successfully"
+
+                    data = {
+                        'note_sender': logged_in_user,
+                        'domain': request.META.get('HTTP_HOST'),#current_site.domain,
+                    }
+
+                    message = render_to_string('Notes/collaborate_notification.html', data)
+                    mail_subject = 'shared a note with you'  # mail subject
+                    to_email = email_to_send  # mail id to be sent to
+                    email = EmailMessage(mail_subject, message,
+                                         to=[to_email])  # takes 3 args: 1. mail subject 2. message 3. mail id to send
+                    email.send()  # sends the mail
+                    messages.success(request, message=res['message'])
+                    return JsonResponse({'message':res['message']})
+                    #return redirect(reverse('getnotes'))
+
+            else:
+                messages.error(request, message=res['message'])
+                return JsonResponse({'message':res['message']})
+                #return redirect(reverse('getnotes'))
+
+        except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+            messages.error(request, message=res['message'])
+            return JsonResponse({'mess':res['message']})
+            # return render(request, 'in.html', {})
 
 class get_data_by_id(RetrieveAPIView):
 
@@ -1770,3 +1771,280 @@ class get_notes_of_label(ListAPIView):
         except (Map_labels.DoesNotExist, Labels.DoesNotExist, ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
             print(e)
             return JsonResponse(res)
+
+class make_note_archive(UpdateAPIView):
+    serializer_class =extra_functions
+    def post(self,request,note_id):
+
+        res = {  # Response information .
+            'message': 'Something bad happened',
+            'data': {},
+            'success': False
+        }
+        try:
+            if note_id:
+                item=Notes.objects.get(id=note_id)
+
+                if item.is_archived:
+                    item.is_archived=False
+                    item.save()
+                    res['message']= 'Note removed from archive'
+                    res['success']=True
+                    return JsonResponse(res)
+
+                elif item.is_archived==False or item.is_archived==None:
+                    item.is_archived=True
+                    item.archive_time = datetime.datetime.now()
+                    item.save()
+                    res['success'] = True
+                    res['message'] = 'Note archived'
+                    return JsonResponse(res)
+
+            else:
+                res['message'] = 'No valid data provided'
+                return JsonResponse(res)
+
+
+        except (Notes.DoesNotExist,  ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+            return JsonResponse(res)
+
+
+class make_note_trash(UpdateAPIView):
+    serializer_class =extra_functions
+    def post(self,request,note_id):
+
+        res = {  # Response information .
+            'message': 'Something bad happened',
+            'data': {},
+            'success': False
+        }
+
+        try:
+            if note_id:
+                item=Notes.objects.get(id=note_id)
+
+                if item.trash:
+                    item.trash=False
+
+                    item.save()
+                    res['message']= 'Note removed from trash'
+                    res['success']=True
+                    return JsonResponse(res)
+
+                elif item.trash==False or item.trash==None:
+                    item.trash=True
+                    item.trash_time = datetime.datetime.now()
+                    item.save()
+                    res['success'] = True
+                    res['message'] = 'Note moved to trash'
+                    return JsonResponse(res)
+
+            else:
+                res['message'] = 'No valid data provided'
+                return JsonResponse(res)
+
+
+        except (Notes.DoesNotExist,  ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+            return JsonResponse(res)
+
+class note_pin_unpin(UpdateAPIView):
+    serializer_class =extra_functions
+    def post(self,request,note_id):
+
+        res = {  # Response information .
+            'message': 'Something bad happened',
+            'data': {},
+            'success': False
+        }
+
+        try:
+            if note_id:
+                item=Notes.objects.get(id=note_id)
+
+                if item.is_pinned:
+                    item.is_pinned=False
+                    item.save()
+                    res['message']= 'Note unpinned'
+                    res['success']=True
+                    return JsonResponse(res)
+
+                elif item.is_pinned==False or item.is_pinned==None:
+                    item.is_pinned=True
+                    item.save()
+                    res['success'] = True
+                    res['message'] = 'Note pinned'
+                    return JsonResponse(res)
+
+            else:
+                res['message'] = 'No valid data provided'
+                return JsonResponse(res)
+
+
+        except (Notes.DoesNotExist,  ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+            return JsonResponse(res)
+
+
+class view_archived_notes(ListAPIView):
+    def get(self,request,user_id):
+        res = {  # Response information .
+            'message': 'Something bad happened',
+            'data': {},
+            'success': False
+        }
+        try:
+            if user_id:
+
+                notes=Notes.objects.filter(user_id=user_id,is_archived=True).values()
+                data=[]
+                for i in notes:
+                    data.append(i)
+                res['message'] ='Archived notes'
+                res['success'] = True
+                res['data'] = data
+                return JsonResponse(res)
+            else:
+                res['message']='No valid Data provided'
+                return JsonResponse(res)
+
+        except (Notes.DoesNotExist,  ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+            return JsonResponse(res)
+
+class view_trash_notes(ListAPIView):
+    def get(self,request,user_id):
+        res = {  # Response information .
+            'message': 'Something bad happened',
+            'data': {},
+            'success': False
+        }
+        try:
+            if user_id:
+
+                notes=Notes.objects.filter(user_id=user_id, trash=True).values()
+                data=[]
+                for i in notes:
+                    data.append(i)
+                res['message'] ='trash notes'
+                res['success'] = True
+                res['data'] = data
+                return JsonResponse(res)
+            else:
+                res['message']='No valid Data provided'
+                return JsonResponse(res)
+
+        except (Notes.DoesNotExist,  ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+            return JsonResponse(res)
+
+class view_pinned_notes(ListAPIView):
+    def get(self,request,user_id):
+        res = {  # Response information .
+            'message': 'Something bad happened',
+            'data': {},
+            'success': False
+        }
+        try:
+            if user_id:
+
+                notes=Notes.objects.filter(user_id=user_id,is_pinned=True).values()
+                data=[]
+                for i in notes:
+                    data.append(i)
+                res['message'] ='pinned notes'
+                res['success'] = True
+                res['data'] = data
+                return JsonResponse(res)
+            else:
+                res['message']='No valid Data provided'
+                return JsonResponse(res)
+
+        except (Notes.DoesNotExist,  ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+            return JsonResponse(res)
+
+
+class update_details(UpdateAPIView):
+    serializer_class = update_serializer
+    def post(self, request, note_id):
+        if request.data:
+            item = Notes.objects.get(id=note_id)
+            item.title=request.data['title']
+            item.description=request.data['description']
+            item.is_archived=request.data['is_archived']
+            item.reminder=request.data['reminder']
+            item.trash=request.data['trash']
+            item.for_color=request.data['for_color']
+            item.save()
+
+            return JsonResponse('edited',safe=False)
+
+class reminder_notification(RetrieveAPIView):
+
+    """ This method is used to send reminder mails to user  """
+
+
+    def get(self,request):
+        res = {
+            'message': 'No result found',  # Response Data
+            'data': {},
+            'success': False
+        }
+        try:
+                token = get_token(key='token')      # gets the token from redis cache
+
+                user = User.objects.get(username=token['username']).pk  # gets the user from username
+                user_email=User.objects.get(id=user)
+                                                                            # if request made from User.
+                items = Notes.objects.filter(user=user).values()    # Gets all notes  for particular user.
+
+                dates=[]                            # list to store only dates of every Note.
+                for i in items:
+                    if i['reminder']:               # if reminder column has some value
+                                                    # convert str to DT and append the date to the list
+                        dates.append(datetime.datetime.strptime(i['reminder'],"%Y-%m-%d"))
+
+
+                j=datetime.datetime.today()         # stores today's date
+
+                remind_dates=[]                     # list to store the dates for which reminder is in two days.
+                for i in dates:
+                    if (i-j).days<=3 and (i-j).days>=0:
+                                                    # calculates the difference and stores the value to list
+                        remind_dates.append(i)
+
+                new_list=[]                          # list elements has some unwanted values and in Str format
+                for i in remind_dates:
+                    i=datetime.datetime.strftime(i, "%Y-%m-%d")     # converts datetime object to a string.
+                    i=i[:10]                         # convert and slice to remove unwanted details
+                    new_list.append(i)
+
+                data=Notes.objects.filter(~Q(reminder_notification_flag=True),user=user,reminder__in=new_list).values('id','title','reminder')
+
+                json_list=[]                         # get all notes with reminder
+                # QuerySet to JSON
+
+                for i in data:                       # taking QuerySet data to list
+                    json_list.append(i)
+
+
+
+                for i in json_list:
+                    data = {
+                        'title': i['title'],
+                        'reminder_date':i['reminder'],
+                        'domain': request.META.get('HTTP_HOST'),  # current_site.domain,
+                    }
+
+                    message = render_to_string('Notes/reminder_notification.html', data)
+                    mail_subject = 'Reminder alert !'       # mail subject
+                    to_email = user_email.email             # mail id to be sent to
+                    email = EmailMessage(mail_subject, message,
+                                         to=[to_email])     # takes 3 args: 1. mail subject 2. message 3. mail id to send
+                    email.send()                            # sends the mail
+                    item=Notes.objects.get(id=i['id'])
+                    item.reminder_notification_flag=True
+                    item.save()
+                    res['message'] = "mail sent successfully"
+                return JsonResponse(json_list,safe=False)
+
+
+        except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+            return JsonResponse(e, safe=False)
+

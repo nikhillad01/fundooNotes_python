@@ -116,3 +116,13 @@ class add_label_serializer(serializers.Serializer):
 
 class map_label_serializer(serializers.Serializer):
     label_name=serializers.CharField(default=None,allow_null=True)
+
+class extra_functions(serializers.Serializer):
+    id=serializers.IntegerField(default=None,allow_null=True)
+
+class update_serializer(serializers.ModelSerializer):
+    # Serializer for update
+
+	class Meta:
+		model = Notes
+		fields = ('id','title', 'description', 'is_archived', 'reminder', 'trash', 'for_color')
