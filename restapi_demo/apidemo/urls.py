@@ -212,6 +212,8 @@ urlpatterns = [
     path('view_reminder_notes/<int:user_id>/', views.view_reminder_notes.as_view(),
          name='view_reminder_notes'),
 
+    url(r'^oauth/', include('social_django.urls', namespace='social')),  # <--
+
 ]
 
 

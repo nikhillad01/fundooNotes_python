@@ -1406,50 +1406,56 @@ class Update(UpdateAPIView):        # UpdateAPIView DRF view , used for update o
                 token = get_token(key='token')      # gets the token from redis cache
                 logged_in_user = User.objects.get(username=token['username'])
 
-                item = Notes.objects.get(id=pk)     # gets the Note
+                if logged_in_user.id !=request.data['collaborate']:      # if user tries to collaborate with itself
+                    item = Notes.objects.get(id=pk)     # gets the Note
 
-                collab = request.data['collaborate']    # gets the user if to collaborate
-                user = User.objects.get(id=collab)      # gets the user from ID
-                email_to_send=user.email
+                    collab = request.data['collaborate']    # gets the user if to collaborate
+                    user = User.objects.get(id=collab)      # gets the user from ID
+                    email_to_send=user.email
 
-                if Notes.collaborate.through.objects.filter(user_id=user, notes_id=item.id):
+                    if Notes.collaborate.through.objects.filter(user_id=user, notes_id=item.id):
 
-                    """ Checks if collaborator is already attached to particular Note """
+                        """ Checks if collaborator is already attached to particular Note """
 
-                    res['message']="Collaborator Already Exists to this note"
-                    messages.success(request, message=res['message'])
-                    return JsonResponse({'success':False})
-                    #return redirect(reverse('getnotes'))
+                        res['message']="Collaborator Already Exists to this note"
+                        messages.success(request, message=res['message'])
+                        return JsonResponse({'success':False})
+                        #return redirect(reverse('getnotes'))
 
+                    else:
+
+                        item.collaborate.add(user)
+                        item.save()
+                        res['message'] = "Collabrator added successfully"
+
+                        data = {
+                            'note_sender': logged_in_user,
+                            'domain': request.META.get('HTTP_HOST'),#current_site.domain,
+                        }
+
+                        message = render_to_string('Notes/collaborate_notification.html', data)
+                        mail_subject = 'shared a note with you'  # mail subject
+                        to_email = email_to_send  # mail id to be sent to
+                        email = EmailMessage(mail_subject, message,
+                                             to=[to_email])  # takes 3 args: 1. mail subject 2. message 3. mail id to send
+                        email.send()  # sends the mail
+                        messages.success(request, message=res['message'])
+                        return JsonResponse({'message': res['message']})
+                        #return redirect(reverse('getnotes'))
                 else:
 
-                    item.collaborate.add(user)
-                    item.save()
-                    res['message'] = "Collabrator added successfully"
-
-                    data = {
-                        'note_sender': logged_in_user,
-                        'domain': request.META.get('HTTP_HOST'),#current_site.domain,
-                    }
-
-                    message = render_to_string('Notes/collaborate_notification.html', data)
-                    mail_subject = 'shared a note with you'  # mail subject
-                    to_email = email_to_send  # mail id to be sent to
-                    email = EmailMessage(mail_subject, message,
-                                         to=[to_email])  # takes 3 args: 1. mail subject 2. message 3. mail id to send
-                    email.send()  # sends the mail
-                    messages.success(request, message=res['message'])
-                    return JsonResponse({'message':res['message']})
-                    #return redirect(reverse('getnotes'))
-
+                    res['message']='Cannot collaborate to same user '
+                    messages.error(request, message=res['message'])
+                    return JsonResponse({'message': res['message']})
             else:
+
                 messages.error(request, message=res['message'])
-                return JsonResponse({'message':res['message']})
+                return JsonResponse({'message': res['message']})
                 #return redirect(reverse('getnotes'))
 
         except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
             messages.error(request, message=res['message'])
-            return JsonResponse({'mess':res['message']})
+            return JsonResponse({'mess': res['message']})
             # return render(request, 'in.html', {})
 
 class get_data_by_id(RetrieveAPIView):

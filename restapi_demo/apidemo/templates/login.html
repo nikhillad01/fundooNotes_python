@@ -1,6 +1,7 @@
 {% include "baseT.html" %}
 {% load staticfiles %}
 {% block main %}
+
 <center>
     {% if messages %}
 <p class="messages">
@@ -23,13 +24,13 @@
                                         <div class="control-group">
                                             <label class="control-label" for="username">Username</label>
                                             <div class="controls">
-                                                <input  class="form-control" type="text" id="username" name="username"  placeholder="Username">
+                                                <input  class="form-control" type="text" id="username" name="username"  placeholder="Username" required>
                                             </div>
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label"  for="password">Password</label>
                                             <div class="controls">
-                                                <input type="password"  class="form-control" name="password" id="password" placeholder="Password">
+                                                <input type="password"  class="form-control" name="password" id="password" placeholder="Password" required>
                                             </div>
                                         </div>
 
@@ -38,7 +39,26 @@
                 <button type="submit" class="btn">Login</button>
             </div>
         </div>
-        </form>
+               </form> <p>or connect with...</p>
+
+
+    <div class="row">
+        <div class="col-md-4 card-text">
+        <a href="{% url 'social:begin' 'github' %}" style="color:black;"><i class="fa fa-github fa-2x" aria-hidden="true" ></i></a>
+        </div>
+        <div class="col-md-4 card-text">
+        <a href ="{% url 'social:begin' 'twitter' %}"><i class="fa fa-twitter fa-2x" aria-hidden="true" ></i></a>
+        </div>
+        <div class="col-md-4 card-text">
+        <a href ="{% url 'social:begin' 'facebook' %}" style="color:#385397;"><i class="fa fa-facebook fa-2x" aria-hidden="true" ></i></a>
+        </div>
+
+    </div>
+
+
+
+
+
                             </div>
                         </div>
                    </div>
@@ -46,7 +66,7 @@
          </div>
     </div>
 
-    </div>                               
+    </div>
     <a href="{% url 'signup' %}">Create account        </a>     <p>
     <a href="{% url 'password_reset' %}">Forgot Password ?? click here to reset</a>
 </center>
