@@ -1000,21 +1000,21 @@ function changeColor(clicked_id)
 
 <!--Script to get data with JqueryAjax-->
 
-<script>
-$(document).ready(function(){
-    var token = localStorage.getItem('token');
-    $.ajax({
-    type: 'GET',
-    url: "http://127.0.0.1:8000/getnotes/",
-    headers: {
-        "Authorization":token
-    }
+<!--<script>-->
+<!--$(document).ready(function(){-->
+    <!--var token = localStorage.getItem('token');-->
+    <!--$.ajax({-->
+    <!--type: 'GET',-->
+    <!--url: "http://127.0.0.1:8000/getnotes/",-->
+    <!--headers: {-->
+        <!--"Authorization":token-->
+    <!--}-->
 
-}).done(function(data) {
-    <!--console.log(data);-->
-});
-});
-</script>
+<!--}).done(function(data) {-->
+    <!--&lt;!&ndash;console.log(data);&ndash;&gt;-->
+<!--});-->
+<!--});-->
+<!--</script>-->
 
 <script>
     $(function(){
@@ -1135,7 +1135,7 @@ $( document ).ready(function() {
                       var checkbox = document.getElementById('label_check');
                        console.log(checkbox);
 
-                       if (checkbox.checked != true)
+                       if (checkbox.checked == true)
                       {
                       console.log("inside check IF");
 
@@ -1153,7 +1153,8 @@ $( document ).ready(function() {
                               },
 
                         }).done(function(data) {
-                            console.log(data);
+                            console.log("REsponse data");
+                            <!--console.log(data);-->
                         });
 
                       }

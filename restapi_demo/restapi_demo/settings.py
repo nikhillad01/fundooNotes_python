@@ -8,6 +8,7 @@ import os
 import datetime
 from dotenv import load_dotenv
 from pathlib import Path  # python3 only
+from celery.schedules import crontab
 load_dotenv()
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -64,6 +65,7 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'rest_framework_swagger',
     'social_django',
+    'django_celery_beat',
 
 ]
 
@@ -209,3 +211,18 @@ SOCIAL_AUTH_FACEBOOK_SECRET =os.getenv("SOCIAL_AUTH_FACEBOOK_SECRET")
 
 SOCIAL_AUTH_TWITTER_KEY =os.getenv("SOCIAL_AUTH_TWITTER_KEY")
 SOCIAL_AUTH_TWITTER_SECRET = os.getenv("SOCIAL_AUTH_TWITTER_SECRET")
+
+CELERY_BROKER_URL = 'redis://localhost:6379'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = "Asia/Kolkata"
+
+
+CELERY_BEAT_SCHEDULE = {
+    'task-number-one': {
+        'task': 'app1.tasks.task_number_one',
+        'schedule': crontab(minute=59, hour=23),
+        'args': (['self'],)
+    }}

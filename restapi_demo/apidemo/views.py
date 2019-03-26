@@ -363,7 +363,8 @@ class AddNote(CreateAPIView):   # CreateAPIView used for create only operations.
 
 
 
-class getnotes(RetrieveAPIView):
+class getnotes(View):
+
     method_decorator(custom_login_required)
     def get(self, request):
 
@@ -854,13 +855,13 @@ def add_labels(request,pk):
 def map_labels(request, *args ,**kwargs):
 
     """This method is used to map labels with each notes """
-    #print('In Map Labels @!!@!@!@!@ ', request.META.get('HTTP_AUTHORIZATION'))
+
     res = {
         'message': 'Something bad happened',  # Response Data
         'data': {},
         'success': False
     }
-
+    print('map labels')
     try:
         if request.POST['pk'] and request.POST['id'] and request.POST['key']:
 
