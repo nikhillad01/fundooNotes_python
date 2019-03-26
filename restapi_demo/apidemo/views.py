@@ -346,17 +346,17 @@ class AddNote(CreateAPIView):   # CreateAPIView used for create only operations.
             serializer = NoteSerializer(data=request.data)  # takes the data from form.
             # check serialized data is valid or not
 
-            if request.data['title'] and request.data['description'] is None:   # if title and description is not provided.
-                raise Exception("Please add some information ")
+            if request.data['title'] and request.data['description']:   # if title and description is not provided.
 
-            if serializer.is_valid():
-                                            # if valid then save it
-                serializer.save()
-                                            # in response return data in json format
-                return HttpResponseRedirect(reverse('getnotes'),content=res)
 
-                                            # else return error msg in response
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                if serializer.is_valid():
+                                                # if valid then save it
+                    serializer.save()
+                                                # in response return data in json format
+                    return HttpResponseRedirect(reverse('getnotes'),content=res)
+
+            else:                              # else return error msg in response
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
             print(e)
             return redirect(reverse('getnotes'))        # redirects to getnotes view
@@ -1402,12 +1402,12 @@ class Update(UpdateAPIView):        # UpdateAPIView DRF view , used for update o
 
         try:
             if pk and request.data['collaborate']:
-                print('in method')
-                token = get_token(key='token')      # gets the token from redis cache
 
+                token = get_token(key='token')      # gets the token from redis cache
                 logged_in_user = User.objects.get(username=token['username'])
-                print(logged_in_user)
+
                 item = Notes.objects.get(id=pk)     # gets the Note
+
                 collab = request.data['collaborate']    # gets the user if to collaborate
                 user = User.objects.get(id=collab)      # gets the user from ID
                 email_to_send=user.email
@@ -1471,21 +1471,15 @@ class get_data_by_id(RetrieveAPIView):
                     'success': False
                 }
                 if request.data['note_id']:
-
-                    # checks if note id is passed
-
+                                                    # checks if note id is passed
                     item = Notes.objects.filter(id=request.data['note_id']).values()
-                    print('printing Note by ID')
                     data = []
                     for i in item:
                         data.append(i)
                     return JsonResponse({'Note Data': data}, safe=False)
 
                 elif request.data['user_id']:
-
-                    # checks if User id is passed
-
-                    print('printing Note by User')
+                                                    # checks if User id is passed
                     item = Notes.objects.filter(user_id=request.data['user_id']).values()
                     data = []
                     for i in item:
@@ -1542,7 +1536,7 @@ class delete_collaborator(DestroyAPIView):
         }
 
         try:
-            if user_id and note_id:
+            if user_id and note_id:         # if user id and note id are provided
                 item = Notes.collaborate.through.objects.get(user_id=user_id, notes_id=note_id)
                 item.delete()
                 res['message'] = 'Collaborator Deleted successfully'
@@ -1568,7 +1562,7 @@ class add_label(CreateAPIView):
         }
         try:
 
-            if pk and request.data['label_name']:
+            if pk and request.data['label_name']:       # if pk and label name are provided
                 label=Labels.objects.create(user=User.objects.get(id=pk), label_name=request.data['label_name'])
                 label.save()
                 res['message'] = 'Label created successfully'
@@ -1593,13 +1587,13 @@ class delete_created_label(DestroyAPIView):
 
     def delete(self, request, pk):
         try:
-            res = {  # Response information .
+            res = {                         # Response information .
                 'message': 'Something bad happened',
                 'data': {},
                 'success': False
             }
-            if pk:
-                label = Labels.objects.get(id=pk)
+            if pk:              # if pk is provided
+                label = Labels.objects.get(id=pk)       # if label is present
                 if label:
                     label.delete()
                     res['message'] = 'Label deleted successfully'
@@ -1620,18 +1614,31 @@ class delete_created_label(DestroyAPIView):
 class map_label_with_note(CreateAPIView):
     serializer_class =map_label_serializer
     def post(self, request, note_id, user_id, label_id):
-        res = {  # Response information .
+        res = {                                         # Response information .
             'message': 'Something bad happened',
             'data': {},
             'success': False
         }
         try:
             if note_id and label_id and user_id:
-                mapped_instance=Map_labels.objects.create(note_id=note_id,user_id=user_id,label_id=Labels.objects.get(id=label_id))
-                mapped_instance.save()
-                res['message'] = 'Label mapped successfully'
-                res['success'] = True
-                return JsonResponse(res)
+
+                if User.objects.filter(pk=user_id).exists():    # if user is valid
+                    if Notes.objects.filter(pk=note_id, user_id=user_id).exists():
+
+                        # if note is present and created by same user
+
+                        mapped_instance = Map_labels.objects.create(note_id=note_id,user_id=user_id,label_id=Labels.objects.get(id=label_id))
+                        mapped_instance.save()
+                        res['message'] = 'Label mapped successfully'
+                        res['success'] = True
+                        return JsonResponse(res)
+                    else:
+                        res['message'] = 'note not found'
+                        return JsonResponse(res)
+                else:
+                    res['message'] = 'User not found'
+                    return JsonResponse(res)
+
             else:
                 res['message'] = 'No valid data provided '
                 return JsonResponse(res)
@@ -1642,7 +1649,7 @@ class map_label_with_note(CreateAPIView):
 
 class update_label(UpdateAPIView):
     serializer_class = map_label_serializer
-    def post(self, request, label_id,user_id):
+    def post(self, request, label_id, user_id):
 
         res = {  # Response information .
             'message': 'Something bad happened',
@@ -1651,12 +1658,16 @@ class update_label(UpdateAPIView):
         }
         try:
             if label_id and user_id:
-                label=Labels.objects.get(id=label_id,user_id=user_id)
-                label.label_name=request.data['label_name']
-                label.save()
-                res['message'] = 'Label Edited successfully'
-                res['success'] = True
-                return JsonResponse(res)
+                if User.objects.filter(pk=user_id).exists():  # if user is valid and present in DB.
+                    label=Labels.objects.get(id=label_id,user_id=user_id)
+                    label.label_name=request.data['label_name']
+                    label.save()
+                    res['message'] = 'Label Edited successfully'
+                    res['success'] = True
+                    return JsonResponse(res)
+                else:
+                    res['message'] = 'User not found'
+                    return JsonResponse(res)
             else:
                 res['message'] = 'No valid details provided'
                 return JsonResponse(res)
@@ -1673,25 +1684,29 @@ class get_noteLabel_list(ListAPIView):
         }
         try:
             if note_id:
-                labels=Map_labels.objects.filter(note_id=note_id).values()
-                if labels:
-                    data=[]
-                    for i in labels:
-                        data.append(i['label_id_id'])
+                if Notes.objects.filter(pk=note_id).exists():  # if note is valid and present in DB.
+                    labels=Map_labels.objects.filter(note_id=note_id).values()
+                    if labels:
+                        data=[]
+                        for i in labels:
+                            data.append(i['label_id_id'])
 
-                    label_names=Labels.objects.filter(id__in=data).values('label_name')
+                        label_names=Labels.objects.filter(id__in=data).values('label_name')
 
-                    data=[]
-                    for i in label_names:
-                        data.append(i)
-                    res['message'] = 'All Labels for note'
-                    res['success']= True
-                    res['data']= data
+                        data=[]
+                        for i in label_names:
+                            data.append(i)
+                        res['message'] = 'All Labels for note'
+                        res['success']= True
+                        res['data']= data
 
 
-                    return JsonResponse(res)
+                        return JsonResponse(res)
+                    else:
+                        res['message'] = 'Labels not found'
+                        return JsonResponse(res)
                 else:
-                    res['message'] = 'Labels not found'
+                    res['message'] = 'Note not found'
                     return JsonResponse(res)
 
 
@@ -1710,22 +1725,27 @@ class get_colaborator_for_note(ListAPIView):
             'data': {},
             'success': False
         }
+
         try:
-            if note_id:
-                collaborators = Notes.collaborate.through.objects.filter(notes_id=int(note_id)).values('user_id')
+            if note_id and type(note_id)==int:
+                if Notes.objects.filter(pk=note_id).exists():  # if note is valid and present in DB.
+                    collaborators = Notes.collaborate.through.objects.filter(notes_id=int(note_id)).values('user_id')
 
-                data= []
-                for i in collaborators:
-                    data.append(i['user_id'])
-                collaborator_names= User.objects.filter(id__in=data).values('username')
+                    data= []
+                    for i in collaborators:
+                        data.append(i['user_id'])
+                    collaborator_names= User.objects.filter(id__in=data).values('username')
 
-                data = []
-                for i in collaborator_names:
-                    data.append(i)
-                res['message']='Collaborators for Note'
-                res['data']= data
-                res['success']=True
-                return JsonResponse(res)
+                    data = []
+                    for i in collaborator_names:
+                        data.append(i)
+                    res['message']='Collaborators for Note'
+                    res['data']= data
+                    res['success']=True
+                    return JsonResponse(res)
+                else:
+                    res['message'] = 'Note not found'
+                    return JsonResponse(res)
             else:
                 res['message'] = 'No valid details provided'
                 return JsonResponse(res)
@@ -1743,24 +1763,28 @@ class get_notes_of_label(ListAPIView):
         }
         try:
             if label_id:
-                labels = Map_labels.objects.filter(label_id_id=label_id).values()
-                if labels:
-                    data = []
-                    for i in labels:
-                        data.append(i['note_id'])
+                if Map_labels.objects.filter(label_id_id=label_id).exists():  # if note is valid and present in DB.
+                    labels = Map_labels.objects.filter(label_id_id=label_id).values()
+                    if labels:
+                        data = []
+                        for i in labels:
+                            data.append(i['note_id'])
 
-                    notes = Notes.objects.filter(id__in=data).values()
+                        notes = Notes.objects.filter(id__in=data).values()
 
-                    data = []
-                    for i in notes:
-                        data.append(i)
-                    res['message'] = 'All notes for label'
-                    res['success'] = True
-                    res['data'] = data
+                        data = []
+                        for i in notes:
+                            data.append(i)
+                        res['message'] = 'All notes for label'
+                        res['success'] = True
+                        res['data'] = data
 
-                    return JsonResponse(res)
+                        return JsonResponse(res)
+                    else:
+                        res['message'] = 'Notes not found'
+                        return JsonResponse(res)
                 else:
-                    res['message'] = 'Notes not found'
+                    res['message'] = 'No labels '
                     return JsonResponse(res)
 
 
@@ -1774,7 +1798,7 @@ class get_notes_of_label(ListAPIView):
 
 class make_note_archive(UpdateAPIView):
     serializer_class =extra_functions
-    def post(self,request,note_id):
+    def post(self, request, note_id):
 
         res = {  # Response information .
             'message': 'Something bad happened',
@@ -1783,21 +1807,24 @@ class make_note_archive(UpdateAPIView):
         }
         try:
             if note_id:
-                item=Notes.objects.get(id=note_id)
+                if Notes.objects.filter(pk=note_id).exists():    # if note is valid and present in DB.
+                    item=Notes.objects.get(id=note_id)
+                    if item.is_archived:
+                        item.is_archived=False
+                        item.save()
+                        res['message']= 'Note removed from archive'
+                        res['success']=True
+                        return JsonResponse(res)
 
-                if item.is_archived:
-                    item.is_archived=False
-                    item.save()
-                    res['message']= 'Note removed from archive'
-                    res['success']=True
-                    return JsonResponse(res)
-
-                elif item.is_archived==False or item.is_archived==None:
-                    item.is_archived=True
-                    item.archive_time = datetime.datetime.now()
-                    item.save()
-                    res['success'] = True
-                    res['message'] = 'Note archived'
+                    elif item.is_archived==False or item.is_archived==None:
+                        item.is_archived=True
+                        item.archive_time = datetime.datetime.now()
+                        item.save()
+                        res['success'] = True
+                        res['message'] = 'Note archived'
+                        return JsonResponse(res)
+                else:
+                    res['message'] = 'Note not present for this id'
                     return JsonResponse(res)
 
             else:
@@ -1821,22 +1848,27 @@ class make_note_trash(UpdateAPIView):
 
         try:
             if note_id:
-                item=Notes.objects.get(id=note_id)
+                if Notes.objects.filter(pk=note_id).exists():    # if note is valid and present in DB.
 
-                if item.trash:
-                    item.trash=False
+                    item=Notes.objects.get(id=note_id)
 
-                    item.save()
-                    res['message']= 'Note removed from trash'
-                    res['success']=True
-                    return JsonResponse(res)
+                    if item.trash:
+                        item.trash=False
 
-                elif item.trash==False or item.trash==None:
-                    item.trash=True
-                    item.trash_time = datetime.datetime.now()
-                    item.save()
-                    res['success'] = True
-                    res['message'] = 'Note moved to trash'
+                        item.save()
+                        res['message']= 'Note removed from trash'
+                        res['success']=True
+                        return JsonResponse(res)
+
+                    elif item.trash==False or item.trash==None:
+                        item.trash=True
+                        item.trash_time = datetime.datetime.now()
+                        item.save()
+                        res['success'] = True
+                        res['message'] = 'Note moved to trash'
+                        return JsonResponse(res)
+                else:
+                    res['message'] = 'Note not present for this id'
                     return JsonResponse(res)
 
             else:
@@ -1859,20 +1891,25 @@ class note_pin_unpin(UpdateAPIView):
 
         try:
             if note_id:
-                item=Notes.objects.get(id=note_id)
+                if Notes.objects.filter(pk=note_id).exists():    # if note is valid and present in DB.
 
-                if item.is_pinned:
-                    item.is_pinned=False
-                    item.save()
-                    res['message']= 'Note unpinned'
-                    res['success']=True
-                    return JsonResponse(res)
+                    item=Notes.objects.get(id=note_id)
 
-                elif item.is_pinned==False or item.is_pinned==None:
-                    item.is_pinned=True
-                    item.save()
-                    res['success'] = True
-                    res['message'] = 'Note pinned'
+                    if item.is_pinned:
+                        item.is_pinned=False
+                        item.save()
+                        res['message']= 'Note unpinned'
+                        res['success']=True
+                        return JsonResponse(res)
+
+                    elif item.is_pinned==False or item.is_pinned==None:
+                        item.is_pinned=True
+                        item.save()
+                        res['success'] = True
+                        res['message'] = 'Note pinned'
+                        return JsonResponse(res)
+                else:
+                    res['message'] = 'Note not present for this id'
                     return JsonResponse(res)
 
             else:
@@ -1886,22 +1923,29 @@ class note_pin_unpin(UpdateAPIView):
 
 class view_archived_notes(ListAPIView):
     def get(self,request,user_id):
-        res = {  # Response information .
+        res = {                                                     # Response information .
             'message': 'Something bad happened',
             'data': {},
             'success': False
         }
         try:
-            if user_id:
-
-                notes=Notes.objects.filter(user_id=user_id,is_archived=True).values()
-                data=[]
-                for i in notes:
-                    data.append(i)
-                res['message'] ='Archived notes'
-                res['success'] = True
-                res['data'] = data
-                return JsonResponse(res)
+            if user_id:                                             # if user id is provided
+                if User.objects.filter(pk=user_id).exists():        # checks if user is valid
+                    notes=Notes.objects.filter(user_id=user_id,is_archived=True).values()   # gets the notes for user
+                    if notes:           # if found notes
+                        data=[]
+                        for i in notes:     # adds the data from Queryset to list for JSON conversion
+                            data.append(i)
+                        res['message'] ='Archived notes'
+                        res['success'] = True
+                        res['data'] = data
+                        return JsonResponse(res)
+                    else:
+                        res['message'] = 'No archived notes'
+                        return JsonResponse(res)
+                else:
+                    res['message'] = 'User not found'
+                    return JsonResponse(res)
             else:
                 res['message']='No valid Data provided'
                 return JsonResponse(res)
@@ -1910,23 +1954,35 @@ class view_archived_notes(ListAPIView):
             return JsonResponse(res)
 
 class view_trash_notes(ListAPIView):
+
+    """This API is used to get all the trash notes
+    Param: user_id : id of user to get notes of """
+
     def get(self,request,user_id):
-        res = {  # Response information .
+        res = {                                                 # Response information .
             'message': 'Something bad happened',
             'data': {},
             'success': False
         }
         try:
-            if user_id:
+            if user_id:                                         # if user id is provided
+                if User.objects.filter(pk=user_id).exists():    # if user is valid and present in DB.
+                    notes=Notes.objects.filter(user_id=user_id, trash=True).values()        # gets all trash notes of user
+                    if notes:                                   # if notes are not none
+                        data=[]
+                        for i in notes:
+                            data.append(i)
+                        res['message'] ='trash notes'
+                        res['success'] = True
+                        res['data'] = data
+                        return JsonResponse(res)
+                    else:
+                        res['message'] = 'No trash notes'
+                        return JsonResponse(res)
+                else:
+                    res['message'] = 'User not found'
+                    return JsonResponse(res)
 
-                notes=Notes.objects.filter(user_id=user_id, trash=True).values()
-                data=[]
-                for i in notes:
-                    data.append(i)
-                res['message'] ='trash notes'
-                res['success'] = True
-                res['data'] = data
-                return JsonResponse(res)
             else:
                 res['message']='No valid Data provided'
                 return JsonResponse(res)
@@ -1936,22 +1992,29 @@ class view_trash_notes(ListAPIView):
 
 class view_pinned_notes(ListAPIView):
     def get(self,request,user_id):
-        res = {  # Response information .
+        res = {                                                 # Response information .
             'message': 'Something bad happened',
             'data': {},
             'success': False
         }
         try:
-            if user_id:
-
-                notes=Notes.objects.filter(user_id=user_id,is_pinned=True).values()
-                data=[]
-                for i in notes:
-                    data.append(i)
-                res['message'] ='pinned notes'
-                res['success'] = True
-                res['data'] = data
-                return JsonResponse(res)
+            if user_id:                                         # if user id is provided
+                if User.objects.filter(pk=user_id).exists():    # if user is valid and present in DB.
+                    notes=Notes.objects.filter(user_id=user_id,is_pinned=True).values() # gets all notes which are pinned
+                    if notes:                                   # if notes are not none
+                        data=[]
+                        for i in notes:
+                            data.append(i)
+                        res['message'] ='pinned notes'
+                        res['success'] = True
+                        res['data'] = data
+                        return JsonResponse(res)
+                    else:
+                        res['message'] = 'No pinned notes'
+                        return JsonResponse(res)
+                else:
+                    res['message'] = 'User not found'
+                    return JsonResponse(res)
             else:
                 res['message']='No valid Data provided'
                 return JsonResponse(res)
@@ -1959,21 +2022,66 @@ class view_pinned_notes(ListAPIView):
         except (Notes.DoesNotExist,  ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
             return JsonResponse(res)
 
+class view_reminder_notes(ListAPIView):
+    def get(self,request,user_id):
+        res = {                                                  # Response information .
+            'message': 'Something bad happened',
+            'data': {},
+            'success': False
+        }
+        try:
+            if user_id:                                         # if user if is provided
+                if User.objects.filter(pk=user_id).exists():    # if user is valid and present in DB.
+                    notes=Notes.objects.filter(~Q(reminder=None), user_id=user_id).values()  # gets all the notes whos reminder is not none
+                    if notes:                                     # if notes are not none
+                        data=[]
+                        for i in notes:
+                            data.append(i)
+                        res['message'] ='reminder notes'
+                        res['success'] = True
+                        res['data'] = data
+                        return JsonResponse(res)
+                    else:
+                        res['message'] = 'No reminder notes'
+                        return JsonResponse(res)
+                else:
+                    res['message'] = 'User not found'
+                    return JsonResponse(res)
+            else:
+                res['message']='No valid Data provided'
+                return JsonResponse(res)
+
+        except (Notes.DoesNotExist,  ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+            res['message'] = 'some exception'
+            return JsonResponse(res)
 
 class update_details(UpdateAPIView):
     serializer_class = update_serializer
     def post(self, request, note_id):
-        if request.data:
-            item = Notes.objects.get(id=note_id)
-            item.title=request.data['title']
-            item.description=request.data['description']
-            item.is_archived=request.data['is_archived']
-            item.reminder=request.data['reminder']
-            item.trash=request.data['trash']
-            item.for_color=request.data['for_color']
-            item.save()
-
-            return JsonResponse('edited',safe=False)
+        res = {  # Response information .
+            'message': 'Something bad happened',
+            'data': {},
+            'success': False
+        }
+        try:
+            if request.data:
+                item = Notes.objects.get(id=note_id)
+                if item:
+                    item.title=request.data['title']
+                    item.description=request.data['description']
+                    item.is_archived=request.data['is_archived']
+                    item.reminder=request.data['reminder']
+                    item.trash=request.data['trash']
+                    item.for_color=request.data['for_color']
+                    item.save()
+                    res['message']= 'Note edited'
+                    res['success'] = True
+                    return JsonResponse(res)
+                else:
+                    res['message'] = 'note not found'
+                    return JsonResponse(res)
+        except (Notes.DoesNotExist,  ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+            return JsonResponse(res)
 
 class reminder_notification(RetrieveAPIView):
 
@@ -2026,6 +2134,7 @@ class reminder_notification(RetrieveAPIView):
 
 
                 for i in json_list:
+
                     data = {
                         'title': i['title'],
                         'reminder_date':i['reminder'],

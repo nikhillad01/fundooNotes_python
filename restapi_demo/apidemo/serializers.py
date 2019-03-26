@@ -126,3 +126,7 @@ class update_serializer(serializers.ModelSerializer):
 	class Meta:
 		model = Notes
 		fields = ('id','title', 'description', 'is_archived', 'reminder', 'trash', 'for_color')
+
+# else:
+#     res['message'] = 'Note not present for this id'
+#     return JsonResponse(res)

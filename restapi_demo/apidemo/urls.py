@@ -208,6 +208,10 @@ urlpatterns = [
     #reminder_notification
     path('reminder_notification/', views.reminder_notification.as_view(),
          name='reminder_notification'),
+    #view_reminder_notes
+    path('view_reminder_notes/<int:user_id>/', views.view_reminder_notes.as_view(),
+         name='view_reminder_notes'),
+
 ]
 
 
