@@ -33,11 +33,10 @@ from django.contrib.auth.models import User
 from django.core.mail import EmailMessage
 from django.contrib.auth import get_user_model, authenticate
 import jwt
-from .serializers import TokenAuthentication, delete_collaborator_serializer, LoginDemoWithRest, get_single_data, \
+from .serializers import  delete_collaborator_serializer, LoginDemoWithRest, get_single_data, \
     delete_single_data_by_id, add_label_serializer, map_label_serializer, extra_functions, update_serializer
 from .serializers import registrationSerializer
-from rest_framework.generics import CreateAPIView, UpdateAPIView, DestroyAPIView, ListCreateAPIView, ListAPIView, \
-    RetrieveAPIView, RetrieveDestroyAPIView, RetrieveUpdateDestroyAPIView, RetrieveUpdateAPIView
+from rest_framework.generics import CreateAPIView, UpdateAPIView, DestroyAPIView, ListCreateAPIView, ListAPIView, RetrieveAPIView
 from .forms import PhotoForm
 from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
@@ -48,7 +47,7 @@ from .models import Labels,Map_labels
 from django.db.models import Q
 import datetime
 from .cloud_services import  s3_services
-
+from .tasks import task_number_one, auto_delete_archive_and_trash
 #current_site = Site.objects.get_current()
 
 
@@ -362,7 +361,9 @@ class AddNote(CreateAPIView):   # CreateAPIView used for create only operations.
             return redirect(reverse('getnotes'))        # redirects to getnotes view
 
 
-from .tasks import task_number_one
+
+
+
 class getnotes(View):
 
     method_decorator(custom_login_required)
@@ -385,8 +386,9 @@ class getnotes(View):
 
         try:
                # gets all the note and sort by created time
-            task_number_one.delay()
-            print('schedule task')
+            #task_number_one.delay()
+            auto_delete_archive_and_trash.delay(49)
+
 
             token=get_token('token')
             user=User.objects.get(username=token['username'])
@@ -1462,11 +1464,14 @@ class Update(UpdateAPIView):        # UpdateAPIView DRF view , used for update o
             return JsonResponse({'mess': res['message']})
             # return render(request, 'in.html', {})
 
+
 class get_data_by_id(RetrieveAPIView):
 
-        """This API is used to get a single instance data by ID(single note data or all notes by single user)
-            Parameter: ID
-            ListCreateAPIView: Used for read-write  operations  ,provides get and post method handlers"""
+        """
+        This API is used to get a single instance data by ID(single note data or all notes by single user)
+        Parameter: ID
+        RetriveAPIView: Used for read-only operations  ,provides get  method handlers
+        """
 
         try:
             serializer_class = get_single_data
@@ -1502,7 +1507,14 @@ class get_data_by_id(RetrieveAPIView):
                 return JsonResponse({'message': 'Something bad happened'})
 
 
+
 class delete_note_by_id(DestroyAPIView):
+
+    """This API is used to delete a single instance data by ID(single note data or all notes by single user)
+       Parameter: ID
+       DestroyAPIView: Used for delete-only operations
+    """
+
     try:
         serializer_class = delete_single_data_by_id
         queryset = Notes.objects.all()
@@ -1535,7 +1547,15 @@ class delete_note_by_id(DestroyAPIView):
             return JsonResponse(res)
 
 
+
 class delete_collaborator(DestroyAPIView):
+
+    """ This API is used to delete a collaborator instance by params
+           Parameter: user_id, note_id
+           user_id: delete this user from collaborator
+           note_id: from this note.
+           DestroyAPIView: Used for delete-only operations
+    """
 
     def delete(self, request, user_id, note_id):
 
@@ -1561,7 +1581,15 @@ class delete_collaborator(DestroyAPIView):
             res['message'] = str(e)
             return JsonResponse(res)
 
+
+
 class add_label(CreateAPIView):
+
+    """ This API is used to create label instance by params
+        Parameter: pk
+        pk (primary key): creates a label for this User
+        CreateAPIView: Used for create-only operations
+    """
 
     serializer_class = add_label_serializer
     def post(self,request,pk):
@@ -1588,7 +1616,16 @@ class add_label(CreateAPIView):
             print(e)
             return JsonResponse(res)
 
+
+
 class delete_created_label(DestroyAPIView):
+
+    """  This API is used to delete a label instance by params
+         Parameter: pk
+         pk : primary key of label to delete
+         DestroyAPIView: Used for delete-only operations
+    """
+
     try:
 
         queryset = Notes.objects.all()
@@ -1621,7 +1658,20 @@ class delete_created_label(DestroyAPIView):
             print(e)
             return JsonResponse(res)
 
+
+
 class map_label_with_note(CreateAPIView):
+
+    """ This API is used to map a label with a note
+            Parameter: note_id,user_id,label_id
+
+            note_id: note to map a label with
+            label_id: id of label to map
+            user_id: specifies instance created by user
+
+            CreateAPIView: Used for create-only operations
+        """
+
     serializer_class =map_label_serializer
     def post(self, request, note_id, user_id, label_id):
         res = {                                         # Response information .
@@ -1658,6 +1708,15 @@ class map_label_with_note(CreateAPIView):
             return JsonResponse(res)
 
 class update_label(UpdateAPIView):
+
+    """  This API is used to update label instance by params
+             Parameter: label_id,user_id
+             label_id : label to update
+             user_id: checks if label is created by its owner
+
+             UpdateAPIView: Used for update-only operations
+        """
+
     serializer_class = map_label_serializer
     def post(self, request, label_id, user_id):
 
@@ -1686,6 +1745,13 @@ class update_label(UpdateAPIView):
             return JsonResponse(res)
 
 class get_noteLabel_list(ListAPIView):
+
+    """  This API is used to get instance by params
+         Parameter: note_id
+         note:id : to get data of this particular note
+         ListAPIView: Used for read-only operations
+    """
+
     def get(self,request,note_id):
         res = {  # Response information .
             'message': 'Something bad happened',
@@ -1729,6 +1795,13 @@ class get_noteLabel_list(ListAPIView):
             return JsonResponse(res)
 
 class get_colaborator_for_note(ListAPIView):
+
+    """  This API is used to get instance by params
+         Parameter: note_id
+         note:id : to get data of this particular note
+         ListAPIView: Used for read-only operations
+    """
+
     def get(self, request, note_id):
         res = {  # Response information .
             'message': 'Something bad happened',
@@ -1765,6 +1838,13 @@ class get_colaborator_for_note(ListAPIView):
             return JsonResponse(res)
 
 class get_notes_of_label(ListAPIView):
+
+    """  This API is used to get all notes attached with a label
+         Parameter: label_id
+         label_id_ : to get data of this particular label
+         ListAPIView: Used for read-only operations
+    """
+
     def get(self, request, label_id):
         res = {  # Response information .
             'message': 'Something bad happened',
@@ -1807,6 +1887,13 @@ class get_notes_of_label(ListAPIView):
             return JsonResponse(res)
 
 class make_note_archive(UpdateAPIView):
+
+    """  This API is used make a note archive by params
+         Parameter:note_id
+         note_id : note id to make it archive
+         UpdateAPIView: Used for update-only operations
+    """
+
     serializer_class =extra_functions
     def post(self, request, note_id):
 
@@ -1847,6 +1934,13 @@ class make_note_archive(UpdateAPIView):
 
 
 class make_note_trash(UpdateAPIView):
+
+    """  This API is used make a note trash by params
+         Parameter:note_id
+         note_id : note id to make it trash
+         UpdateAPIView: Used for update-only operations
+    """
+
     serializer_class =extra_functions
     def post(self,request,note_id):
 
@@ -1890,6 +1984,13 @@ class make_note_trash(UpdateAPIView):
             return JsonResponse(res)
 
 class note_pin_unpin(UpdateAPIView):
+
+    """  This API is used make a note pin-unpin by params
+         Parameter:note_id
+         note_id : note id to make it pin-unpin
+         UpdateAPIView: Used for update-only operations
+    """
+
     serializer_class =extra_functions
     def post(self,request,note_id):
 
@@ -1932,6 +2033,13 @@ class note_pin_unpin(UpdateAPIView):
 
 
 class view_archived_notes(ListAPIView):
+
+    """  This API is used to get all archived notes by params
+         Parameter: user_id
+         user_id: to get data of this particular user
+         ListAPIView: Used for read-only operations
+    """
+
     def get(self,request,user_id):
         res = {                                                     # Response information .
             'message': 'Something bad happened',
@@ -1965,8 +2073,11 @@ class view_archived_notes(ListAPIView):
 
 class view_trash_notes(ListAPIView):
 
-    """This API is used to get all the trash notes
-    Param: user_id : id of user to get notes of """
+    """  This API is used to get all trash notes by params
+         Parameter: user_id
+         user_id: to get data of this particular user
+         ListAPIView: Used for read-only operations
+    """
 
     def get(self,request,user_id):
         res = {                                                 # Response information .
@@ -2001,6 +2112,13 @@ class view_trash_notes(ListAPIView):
             return JsonResponse(res)
 
 class view_pinned_notes(ListAPIView):
+
+    """  This API is used to get all pinned notes by params
+         Parameter: user_id
+         user_id: to get data of this particular user
+         ListAPIView: Used for read-only operations
+    """
+
     def get(self,request,user_id):
         res = {                                                 # Response information .
             'message': 'Something bad happened',
@@ -2033,6 +2151,13 @@ class view_pinned_notes(ListAPIView):
             return JsonResponse(res)
 
 class view_reminder_notes(ListAPIView):
+
+    """  This API is used to get all reminder notes by params
+         Parameter: user_id
+         user_id: to get data of this particular user
+         ListAPIView: Used for read-only operations
+    """
+
     def get(self,request,user_id):
         res = {                                                  # Response information .
             'message': 'Something bad happened',
@@ -2066,6 +2191,13 @@ class view_reminder_notes(ListAPIView):
             return JsonResponse(res)
 
 class update_details(UpdateAPIView):
+
+    """  This API is used to update label instance by params
+         Parameter: note_id
+         note_id : to update note
+         UpdateAPIView: Used for update-only operations
+    """
+
     serializer_class = update_serializer
     def post(self, request, note_id):
         res = {  # Response information .
@@ -2093,17 +2225,20 @@ class update_details(UpdateAPIView):
         except (Notes.DoesNotExist,  ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
             return JsonResponse(res)
 
+
 class reminder_notification(RetrieveAPIView):
 
-    """ This method is used to send reminder mails to user  """
-
+    """ This API is used to send email notifications to users as reminder
+        RetriveAPIView: Used for read-only operations  ,provides get  method handlers"""
 
     def get(self,request):
+
         res = {
             'message': 'No result found',  # Response Data
             'data': {},
             'success': False
         }
+
         try:
                 token = get_token(key='token')      # gets the token from redis cache
 
@@ -2121,7 +2256,7 @@ class reminder_notification(RetrieveAPIView):
 
                 j=datetime.datetime.today()         # stores today's date
 
-                remind_dates=[]                     # list to store the dates for which reminder is in two days.
+                remind_dates=[]                     # list to store the dates for which reminder is in three days.
                 for i in dates:
                     if (i-j).days<=3 and (i-j).days>=0:
                                                     # calculates the difference and stores the value to list
@@ -2147,7 +2282,7 @@ class reminder_notification(RetrieveAPIView):
 
                     data = {
                         'title': i['title'],
-                        'reminder_date':i['reminder'],
+                        'reminder_date': i['reminder'],
                         'domain': request.META.get('HTTP_HOST'),  # current_site.domain,
                     }
 
