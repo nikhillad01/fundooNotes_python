@@ -362,7 +362,7 @@ class AddNote(CreateAPIView):   # CreateAPIView used for create only operations.
             return redirect(reverse('getnotes'))        # redirects to getnotes view
 
 
-
+from .tasks import task_number_one
 class getnotes(View):
 
     method_decorator(custom_login_required)
@@ -385,6 +385,9 @@ class getnotes(View):
 
         try:
                # gets all the note and sort by created time
+            task_number_one.delay()
+            print('schedule task')
+
             token=get_token('token')
             user=User.objects.get(username=token['username'])
 
