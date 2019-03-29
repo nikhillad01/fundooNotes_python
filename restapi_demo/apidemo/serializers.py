@@ -127,6 +127,10 @@ class update_serializer(serializers.ModelSerializer):
 		model = Notes
 		fields = ('id','title', 'description', 'is_archived', 'reminder', 'trash', 'for_color')
 
+
+
+class reminder_serializer(serializers.Serializer):
+    reminder = serializers.CharField(max_length=8)
 # else:
 #     res['message'] = 'Note not present for this id'
 #     return JsonResponse(res)

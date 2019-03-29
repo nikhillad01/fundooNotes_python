@@ -9,9 +9,10 @@ app.autodiscover_tasks()
 
 
 @app.task(bind=True, once={'graceful': True})
-def debug_task(*args):
+def debug_task():
     print('my 22323 task')
 
 @shared_task
 def print_something():
     print('Helloo')
+

@@ -14,13 +14,13 @@ from .models import Notes
 
 @shared_task
 def task_number_one():
-    #print('My first task runninggggg')
     username='tcelery2'
     password='admin123'
     email='nikhillad01@gmail.com'
     user=User.objects.create(username=username, password=password, email=email)
     user.save()
     return 'first task is running , user created successfully '
+
 
 @shared_task()
 def auto_delete_archive_and_trash(user):
@@ -32,12 +32,6 @@ def auto_delete_archive_and_trash(user):
 
     try:
 
-        # token = get_token(key='token')     # gets the token from redis cache
-        #
-        # user=User.objects.get(username=token['username']).pk        # gets the PK of user from token's username
-
-
-        #user=49
         note_list = Notes.objects.filter(~Q(archive_time=None), user_id=user, is_archived=True).values('archive_time','id','trash_time').order_by(
             '-created_time')
         today = datetime.datetime.today().date()  # gets the today's date                                                # gets all the notes who's archive time is not None adn is_archive field is True
@@ -48,13 +42,8 @@ def auto_delete_archive_and_trash(user):
 
             notes_to_trash=[]
             if end_date.date()==today:                  # if end date and today's date are equal means 15 days over , then move the note to trash.
-            #     return 'end'+i
-            # else:
-            #     # yield end_date.date()
-            #     return end_date.date()
                 item = Notes.objects.get(id=i['id'])    # gets the note by id
                 item.trash=True                         # moves to trash.
-                item.label='tasks to delete'
                 item.save()                             # saves the note.
                 notes_to_trash.append(item)
 
@@ -74,15 +63,6 @@ def auto_delete_archive_and_trash(user):
                 delete_item = Notes.objects.get(id=j['id'])  # gets the note by id
                 notes_to_delete.append(delete_item)
                 delete_item.delete()                         # deletes the note
-
-
-        # archive_delete=[]
-        # for i in note_list:
-        #    archive_delete.append(i)
-        #
-        # trash_delete=[]
-        # for i in trash_note_list:
-        #     trash_delete.append(i)
 
         return notes_to_trash, trash_note_list
 

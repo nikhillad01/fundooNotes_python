@@ -9,6 +9,9 @@ import datetime
 from dotenv import load_dotenv
 from pathlib import Path  # python3 only
 from celery.schedules import crontab
+
+#from restapi_demo import apidemo
+
 load_dotenv()
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -201,6 +204,20 @@ LOGIN_URL = '/login_v'
 LOGIN_REDIRECT_URL = '/base'
 LOGOUT_URL = '/logout'
 
+SWAGGER_SETTINGS = {
+    'SHOW_REQUEST_HEADERS': True,
+    'SECURITY_DEFINITIONS': {
+        'api_key': {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+
+    }
+
+}
+
+
 # social authentication keys
 
 SOCIAL_AUTH_GITHUB_KEY =os.getenv("SOCIAL_AUTH_GITHUB_KEY")
@@ -214,17 +231,25 @@ SOCIAL_AUTH_TWITTER_SECRET = os.getenv("SOCIAL_AUTH_TWITTER_SECRET")
 
 #CELERY_BROKER_URL = 'redis://localhost:6379'
 
-CELERY_BROKER_URL ='amqp://localhost'
-#CELERY_RESULT_BACKEND = 'redis://localhost:6379'
-#CELERY_ACCEPT_CONTENT = ['application/json']
-#CELERY_TASK_SERIALIZER = 'json'
-#CELERY_RESULT_SERIALIZER = 'json'
+CELERY_BROKER_URL ='amqp://localhost'       # rabbit-mq as message broker
+
 CELERY_TIMEZONE = "Asia/Kolkata"
 
-
+# SCHEDULE for tasks
 CELERY_BEAT_SCHEDULE = {
-    'task-number-one': {
-        'task': 'apidemo.tasks.task_number_one',
-        #'schedule': crontab(minute=0, hour=23),
-        #'args': (['self'],)
-    }}
+    'auto_delete_archive_and_trash': {
+        'task': 'apidemo.tasks.auto_delete_archive_and_trash',
+        'schedule': crontab(minute=0, hour=10),
+        'args': 49
+
+    }
+}
+
+# apidemo.conf.beat_schedule = {
+#     # Executes every Monday morning at 7:30 a.m.
+#     'auto_delete_archive_and_trash': {
+#         'task': 'apidemo.tasks.auto_delete_archive_and_trash',
+#         'schedule': crontab(hour=7, minute=30, day_of_week=1),
+#         'args': (49),
+#     },
+#}

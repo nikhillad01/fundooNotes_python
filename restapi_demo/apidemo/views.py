@@ -33,8 +33,9 @@ from django.contrib.auth.models import User
 from django.core.mail import EmailMessage
 from django.contrib.auth import get_user_model, authenticate
 import jwt
-from .serializers import  delete_collaborator_serializer, LoginDemoWithRest, get_single_data, \
-    delete_single_data_by_id, add_label_serializer, map_label_serializer, extra_functions, update_serializer
+from .serializers import delete_collaborator_serializer, LoginDemoWithRest, get_single_data, \
+    delete_single_data_by_id, add_label_serializer, map_label_serializer, extra_functions, update_serializer, \
+    reminder_serializer
 from .serializers import registrationSerializer
 from rest_framework.generics import CreateAPIView, UpdateAPIView, DestroyAPIView, ListCreateAPIView, ListAPIView, RetrieveAPIView
 from .forms import PhotoForm
@@ -42,7 +43,7 @@ from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
 from .serializers import NoteSerializer
 from rest_framework import status
-from .custom_decorators import custom_login_required
+from .custom_decorators import custom_login_required, custom_Log
 from .models import Labels,Map_labels
 from django.db.models import Q
 import datetime
@@ -563,32 +564,22 @@ def updateNotes(request,pk):
     }
     try:
         pk_note=request.POST.get('pk_note')
-        print('found pk',pk_note)
         pk=pk_note
 
-
-        if pk is None:                  # if pk is not provided.
+        if pk:                  # if pk is not provided.
+            title=request.POST.get('title')
+            update_description=request.POST.get('description')
+            note=Notes.objects.get(id=pk_note)       # gets the data with primary key
+            title=request.POST.get('title')
+            description = request.POST.get('description')
+                                  # changing data of note with form data.
+            note.title=title
+            note.description=description
+            note.save()             # saves the updated data
+            return redirect(reverse('getnotes'))
+        else:
             messages.error('Invalid Details')
             return redirect(reverse('getnotes'))
-
-
-        title=request.POST.get('title')
-        update_description=request.POST.get('description')
-
-
-
-
-        note=Notes.objects.get(id=pk_note)       # gets the data with primary key
-        print('note',note)
-
-        title=request.POST.get('title')
-        description = request.POST.get('description')
-                              # changing data of note with form data.
-        note.title=title
-        note.description=description
-
-        note.save()             # saves the updated data
-        return redirect(reverse('getnotes'))
 
     except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
         print(e)
@@ -1087,7 +1078,8 @@ def search(request):
                             print('ajax request')
 
                             return render(request, 'in.html', {'not_list': new_notelist})
-                        else:print('not ajax')
+                        else:
+                            print('not ajax')
                     else:
                         res['message']="No results found"
                         print('')
@@ -1167,9 +1159,31 @@ def reminder(request):
         return render(request,'in.html', {})
 
 
+class set_card_reminder(UpdateAPIView):
+    serializer_class =reminder_serializer
+    def post(request,pk):
+        res = {
+            'message': 'No result found',  # Response Data
+            'data': {},
+            'success': False
+        }
 
+        try:
+            if request.data['reminder1']:
+                reminder1=request.POST['reminder1']
 
-
+                r=datetime.datetime.strptime(reminder1, "%m/%d/%Y")
+                note=Notes.objects.get(id=pk)
+                if note:
+                    note.reminder=r.date()
+                    note.save()
+                    return redirect(reverse('getnotes'))
+                else:
+                    messages.error(request, message=res['message'])
+                    return render(request, 'in.html', {})
+        except (Notes.DoesNotExist,KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+            messages.error(request, message=res['message'])
+            return render(request,'in.html', {})
 
 
 
@@ -1473,12 +1487,11 @@ class get_data_by_id(RetrieveAPIView):
         RetriveAPIView: Used for read-only operations  ,provides get  method handlers
         """
 
-        try:
-            serializer_class = get_single_data
-        except(ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception):
-            print('Serializer Error')
 
-        def post(self, request):
+        serializer_class = get_single_data
+        queryset = Notes.objects.all()
+        def post(self, request,pk):
+
             try:
                 res = {
                     'message': 'No valid details provided',  # response information
@@ -1503,7 +1516,7 @@ class get_data_by_id(RetrieveAPIView):
                 else:
                     return JsonResponse(res)
 
-            except (ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception):
+            except (Notes.DoesNotExist,ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception):
                 return JsonResponse({'message': 'Something bad happened'})
 
 
@@ -1529,9 +1542,9 @@ class delete_note_by_id(DestroyAPIView):
                 'success': False
             }
             if pk:
-                note = Notes.objects.get(id=pk)
+                note = Notes.objects.get(id=pk)     # gets the note by id
                 if note:
-                    note.delete()
+                    note.delete()       # deletes the note
                     res['message'] = 'Note deleted successfully'
                     res['success'] = True
 
@@ -1542,7 +1555,7 @@ class delete_note_by_id(DestroyAPIView):
             else:
                 res['message'] = 'ID not provided'
                 return JsonResponse(res)
-        except (ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+        except (Notes.DoesNotExist,ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
             print(e)
             return JsonResponse(res)
 
@@ -1568,7 +1581,7 @@ class delete_collaborator(DestroyAPIView):
         try:
             if user_id and note_id:         # if user id and note id are provided
                 item = Notes.collaborate.through.objects.get(user_id=user_id, notes_id=note_id)
-                item.delete()
+                item.delete()   # gets the collaborator and deletes it
                 res['message'] = 'Collaborator Deleted successfully'
                 res['success'] = True
                 return JsonResponse(res)
@@ -1626,11 +1639,9 @@ class delete_created_label(DestroyAPIView):
          DestroyAPIView: Used for delete-only operations
     """
 
-    try:
 
-        queryset = Notes.objects.all()
-    except (ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
-        print(e)
+
+    queryset = Notes.objects.all()
 
     def delete(self, request, pk):
         try:
@@ -1642,7 +1653,7 @@ class delete_created_label(DestroyAPIView):
             if pk:              # if pk is provided
                 label = Labels.objects.get(id=pk)       # if label is present
                 if label:
-                    label.delete()
+                    label.delete()      # deletes the label
                     res['message'] = 'Label deleted successfully'
                     res['success'] = True
 
@@ -1688,7 +1699,7 @@ class map_label_with_note(CreateAPIView):
                         # if note is present and created by same user
 
                         mapped_instance = Map_labels.objects.create(note_id=note_id,user_id=user_id,label_id=Labels.objects.get(id=label_id))
-                        mapped_instance.save()
+                        mapped_instance.save()      # gets the note and map label to it
                         res['message'] = 'Label mapped successfully'
                         res['success'] = True
                         return JsonResponse(res)
@@ -1718,6 +1729,7 @@ class update_label(UpdateAPIView):
         """
 
     serializer_class = map_label_serializer
+    @method_decorator(custom_Log)
     def post(self, request, label_id, user_id):
 
         res = {  # Response information .
@@ -1727,7 +1739,8 @@ class update_label(UpdateAPIView):
         }
         try:
             if label_id and user_id:
-                if User.objects.filter(pk=user_id).exists():  # if user is valid and present in DB.
+                if User.objects.filter(pk=user_id).exists():
+                                                         # if user is valid and present in DB.
                     label=Labels.objects.get(id=label_id,user_id=user_id)
                     label.label_name=request.data['label_name']
                     label.save()
@@ -1853,18 +1866,17 @@ class get_notes_of_label(ListAPIView):
         }
         try:
             if label_id:
-                if Map_labels.objects.filter(label_id_id=label_id).exists():  # if note is valid and present in DB.
                     labels = Map_labels.objects.filter(label_id_id=label_id).values()
                     if labels:
                         data = []
                         for i in labels:
                             data.append(i['note_id'])
-
                         notes = Notes.objects.filter(id__in=data).values()
-
                         data = []
-                        for i in notes:
+
+                        for i in notes:     # appends data to list for JSON conversion
                             data.append(i)
+
                         res['message'] = 'All notes for label'
                         res['success'] = True
                         res['data'] = data
@@ -1873,9 +1885,7 @@ class get_notes_of_label(ListAPIView):
                     else:
                         res['message'] = 'Notes not found'
                         return JsonResponse(res)
-                else:
-                    res['message'] = 'No labels '
-                    return JsonResponse(res)
+
 
 
             else:
@@ -1905,24 +1915,28 @@ class make_note_archive(UpdateAPIView):
         try:
             if note_id:
                 if Notes.objects.filter(pk=note_id).exists():    # if note is valid and present in DB.
+
                     item=Notes.objects.get(id=note_id)
+
                     if item.is_archived:
-                        item.is_archived=False
-                        item.save()
-                        res['message']= 'Note removed from archive'
-                        res['success']=True
-                        return JsonResponse(res)
+                            item.is_archived=False
+                            item.save()
+                            res['message']= 'Note removed from archive'
+                            res['success']=True
+                            return JsonResponse(res)
 
                     elif item.is_archived==False or item.is_archived==None:
-                        item.is_archived=True
-                        item.archive_time = datetime.datetime.now()
-                        item.save()
-                        res['success'] = True
-                        res['message'] = 'Note archived'
-                        return JsonResponse(res)
+                            item.is_archived=True
+                            item.archive_time = datetime.datetime.now()
+                            item.save()
+                            res['success'] = True
+                            res['message'] = 'Note archived'
+                            return JsonResponse(res)
                 else:
                     res['message'] = 'Note not present for this id'
                     return JsonResponse(res)
+
+
 
             else:
                 res['message'] = 'No valid data provided'
@@ -2157,13 +2171,14 @@ class view_reminder_notes(ListAPIView):
          user_id: to get data of this particular user
          ListAPIView: Used for read-only operations
     """
-
+    @method_decorator(custom_Log)
     def get(self,request,user_id):
         res = {                                                  # Response information .
             'message': 'Something bad happened',
             'data': {},
             'success': False
         }
+
         try:
             if user_id:                                         # if user if is provided
                 if User.objects.filter(pk=user_id).exists():    # if user is valid and present in DB.
@@ -2199,12 +2214,14 @@ class update_details(UpdateAPIView):
     """
 
     serializer_class = update_serializer
+
     def post(self, request, note_id):
         res = {  # Response information .
             'message': 'Something bad happened',
             'data': {},
             'success': False
         }
+
         try:
             if request.data:
                 item = Notes.objects.get(id=note_id)
@@ -2231,6 +2248,7 @@ class reminder_notification(RetrieveAPIView):
     """ This API is used to send email notifications to users as reminder
         RetriveAPIView: Used for read-only operations  ,provides get  method handlers"""
 
+    @method_decorator(custom_Log)
     def get(self,request):
 
         res = {

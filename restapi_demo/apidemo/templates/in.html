@@ -1,6 +1,6 @@
 <!doctype html>
 {% load static %}
-<html>
+<html xmlns="http://www.w3.org/1999/html">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -117,7 +117,7 @@ localStorage.setItem('token', ("{{token.data}}"));
                         </a>
                         <i class="fa fa-bars"></i>
                         </a>
-                        <a style="margin-right:1300px;color: #635f5f;font-size: 20px;font-family: Roboto;" href="#">fundooNotes</a>
+                        <a style="margin-right:1300px;color: #635f5f;font-size: 20px;font-family: Roboto;" href="{% url 'getnotes' %}">fundooNotes</a>
                         <button class="search-btn" aria-label="Search" role="button" id="searchicon">
                               <svg focusable="false" height="24px" viewBox="0 0 24 24" width="24px" xmlns="http://www.w3.org/2000/svg">
                                   <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path>
@@ -483,11 +483,13 @@ localStorage.setItem('token', ("{{token.data}}"));
                                     <div class='col-sm-6'>
                                         <div class="form-group">
                                             <div class='input-group date' id='datetimepicker2'>
+                                                <form method="post" enctype="multipart/form-data" action="{% url 'set_card_reminder' i.id %}">
                                                 <input type='text' class="form-control" name="reminder1" id="reminder1" />
                                                 <span class="input-group-addon">
                                                     <span class="glyphicon glyphicon-calendar"></span>
                                                 </span>
                                             </div>
+                                            <input type="submit"></form>
                                         </div>
                                     </div>
 
@@ -734,14 +736,14 @@ localStorage.setItem('token', ("{{token.data}}"));
 
 </div>
 
-<center>
-<div class="card-columns"   style = "position:relative; right:300px; top:-300px; ">
+<!--<center>-->
+<div class="card-columns"   >
 
     {% for i in not_list %}
 
-    <!--<div >-->
-         <article id="{{i.id}}" class="card" style="background-color:{{i.for_color}};height:240px;width:210px;">
-             <div href="#" data-toggle="modal" data-target="#myModal" id="page-button i" style="background-color:{{i.color}};" >
+
+         <article  class="card" style="background-color:{{i.for_color}};height:240px;width:210px;margin-top:-300px;">
+             <div href="#" data-toggle="modal" data-target="#myModal" id="page-button i" style="background-color:{{i.color}};">
              <div class="card-content" >
                   <h3 id="text_box1" data-model-name="text_box"  value={{i.title}}>{{i.title }}</h3>
                   <p id="text_area1" data-model-name="text_area" value={{i.description}}>{{i.description}}</p>
@@ -998,24 +1000,6 @@ function changeColor(clicked_id)
 </script>
 
 
-<!--Script to get data with JqueryAjax-->
-
-<!--<script>-->
-<!--$(document).ready(function(){-->
-    <!--var token = localStorage.getItem('token');-->
-    <!--$.ajax({-->
-    <!--type: 'GET',-->
-    <!--url: "http://127.0.0.1:8000/getnotes/",-->
-    <!--headers: {-->
-        <!--"Authorization":token-->
-    <!--}-->
-
-<!--}).done(function(data) {-->
-    <!--&lt;!&ndash;console.log(data);&ndash;&gt;-->
-<!--});-->
-<!--});-->
-<!--</script>-->
-
 <script>
     $(function(){
         $('#search').keyup(function(){
@@ -1039,33 +1023,14 @@ function searchSuccess(data,testStatus,jqXHR)
     $('#add_note').hide();
     $('#add_note').hide();
     $("hr").hide();
+    $('#panel-body').hide();
+    $('.title').hide();
     $('.panel-body').hide();
-    <!--$('#title').hide();-->
-    <!--$('#description').hide();-->
-
+    $('.description').hide();
+    $('.menu').hide();
     $('#search-results').html(data);
-
-
-    <!--$('.wapper_forNote').hide();-->
      $('#pagination').hide();
-    <!--var dataArray = data;-->
 
-    <!--var testList=$("<ul></ul>");-->
-
-
-    <!--for (var i=0; i<dataArray.length; i++) {-->
-    <!--console.log(data[i]['title']);-->
-<!--}-->
-
-      <!--&lt;!&ndash;$(testList).append("<b>Reminders for coming two days</b><br>");&ndash;&gt;-->
-    <!--for(i=0;i<dataArray.length;i++){-->
-
-        <!--$(testList).append($("<br><li></li>").text(dataArray[i].title));-->
-        <!--&lt;!&ndash;$('#ac').val(dataArray[i].title);&ndash;&gt;-->
-    <!--}-->
-    <!--$('#new_div').html(testList);-->
-
-     <!--&lt;!&ndash;$('#new_div').html(data);&ndash;&gt;-->
 
 
 }
@@ -1138,25 +1103,19 @@ $( document ).ready(function() {
                        if (checkbox.checked == true)
                       {
                       console.log("inside check IF");
-
                       $.ajax({
-
                             type: 'POST',
                             url: "http://127.0.0.1:8000/map_labels/",
-
                             data: {
-
                                 'pk':pk,
                                 'id':user_id,
                                 'key':i_id,
                                 'csrfmiddlewaretoken': window.CSRF_TOKEN
                               },
-
                         }).done(function(data) {
                             console.log("REsponse data");
                             <!--console.log(data);-->
                         });
-
                       }
 }
 </script>

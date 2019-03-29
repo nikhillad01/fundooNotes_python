@@ -95,7 +95,8 @@ urlpatterns = [
     path('is_archived/<int:pk>/', views.is_archived, name='is_archived'),
     #View_is_archived
     path('View_is_archived/', views.View_is_archived.as_view(), name='View_is_archived'),
-
+    #set_card_reminder
+    path('set_card_reminder/<int:pk>/', views.set_card_reminder.as_view(), name='set_card_reminder'),
 
     # Labels
     #add_labels
