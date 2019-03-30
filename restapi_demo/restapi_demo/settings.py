@@ -241,15 +241,5 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'apidemo.tasks.auto_delete_archive_and_trash',
         'schedule': crontab(minute=0, hour=10),
         'args': 49
-
     }
 }
-
-# apidemo.conf.beat_schedule = {
-#     # Executes every Monday morning at 7:30 a.m.
-#     'auto_delete_archive_and_trash': {
-#         'task': 'apidemo.tasks.auto_delete_archive_and_trash',
-#         'schedule': crontab(hour=7, minute=30, day_of_week=1),
-#         'args': (49),
-#     },
-#}

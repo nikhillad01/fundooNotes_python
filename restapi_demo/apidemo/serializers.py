@@ -131,6 +131,3 @@ class update_serializer(serializers.ModelSerializer):
 
 class reminder_serializer(serializers.Serializer):
     reminder = serializers.CharField(max_length=8)
-# else:
-#     res['message'] = 'Note not present for this id'
-#     return JsonResponse(res)

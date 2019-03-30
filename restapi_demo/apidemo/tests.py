@@ -2,7 +2,7 @@ from django.conf.global_settings import AUTH_USER_MODEL
 from django.test import TestCase
 import pytest
 
-#from restapi_demo.restapi_demo.settings import INSTALLED_APPS
+
 
 from .models import RestRegistration        # Model
 pytestmark = pytest.mark.django_db          # permit to access database

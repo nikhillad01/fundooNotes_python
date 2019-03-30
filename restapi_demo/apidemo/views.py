@@ -1541,6 +1541,7 @@ class delete_note_by_id(DestroyAPIView):
                 'data': {},
                 'success': False
             }
+
             if pk:
                 note = Notes.objects.get(id=pk)     # gets the note by id
                 if note:
@@ -1639,8 +1640,6 @@ class delete_created_label(DestroyAPIView):
          DestroyAPIView: Used for delete-only operations
     """
 
-
-
     queryset = Notes.objects.all()
 
     def delete(self, request, pk):
@@ -1656,7 +1655,6 @@ class delete_created_label(DestroyAPIView):
                     label.delete()      # deletes the label
                     res['message'] = 'Label deleted successfully'
                     res['success'] = True
-
                     return JsonResponse(res)
                 else:
                     res['message'] = 'Label not found for given ID'
@@ -1685,11 +1683,13 @@ class map_label_with_note(CreateAPIView):
 
     serializer_class =map_label_serializer
     def post(self, request, note_id, user_id, label_id):
+
         res = {                                         # Response information .
             'message': 'Something bad happened',
             'data': {},
             'success': False
         }
+
         try:
             if note_id and label_id and user_id:
 
@@ -1737,11 +1737,12 @@ class update_label(UpdateAPIView):
             'data': {},
             'success': False
         }
+
         try:
             if label_id and user_id:
                 if User.objects.filter(pk=user_id).exists():
                                                          # if user is valid and present in DB.
-                    label=Labels.objects.get(id=label_id,user_id=user_id)
+                    label=Labels.objects.get(id=label_id, user_id=user_id)
                     label.label_name=request.data['label_name']
                     label.save()
                     res['message'] = 'Label Edited successfully'
@@ -1788,8 +1789,6 @@ class get_noteLabel_list(ListAPIView):
                         res['message'] = 'All Labels for note'
                         res['success']= True
                         res['data']= data
-
-
                         return JsonResponse(res)
                     else:
                         res['message'] = 'Labels not found'
@@ -1797,7 +1796,6 @@ class get_noteLabel_list(ListAPIView):
                 else:
                     res['message'] = 'Note not found'
                     return JsonResponse(res)
-
 
             else:
                 res['message'] = 'No valid data provided'
@@ -1886,8 +1884,6 @@ class get_notes_of_label(ListAPIView):
                         res['message'] = 'Notes not found'
                         return JsonResponse(res)
 
-
-
             else:
                 res['message'] = 'No valid data provided'
                 return JsonResponse(res)
@@ -1935,8 +1931,6 @@ class make_note_archive(UpdateAPIView):
                 else:
                     res['message'] = 'Note not present for this id'
                     return JsonResponse(res)
-
-
 
             else:
                 res['message'] = 'No valid data provided'
@@ -2205,6 +2199,7 @@ class view_reminder_notes(ListAPIView):
             res['message'] = 'some exception'
             return JsonResponse(res)
 
+
 class update_details(UpdateAPIView):
 
     """  This API is used to update label instance by params
@@ -2215,7 +2210,7 @@ class update_details(UpdateAPIView):
 
     serializer_class = update_serializer
 
-    def post(self, request, note_id):
+    def post(self,request, note_id):
         res = {  # Response information .
             'message': 'Something bad happened',
             'data': {},
@@ -2294,8 +2289,6 @@ class reminder_notification(RetrieveAPIView):
                 for i in data:                       # taking QuerySet data to list
                     json_list.append(i)
 
-
-
                 for i in json_list:
 
                     data = {
@@ -2314,8 +2307,7 @@ class reminder_notification(RetrieveAPIView):
                     item.reminder_notification_flag=True
                     item.save()
                     res['message'] = "mail sent successfully"
-                return JsonResponse(json_list,safe=False)
-
+                return JsonResponse(json_list, safe=False)
 
         except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
             return JsonResponse(e, safe=False)
