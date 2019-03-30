@@ -135,12 +135,21 @@ WSGI_APPLICATION = 'restapi_demo.wsgi.application'
 
 DATABASES = {
     'default': {
+<<<<<<< HEAD
         'ENGINE': os.getenv("DATABASE_ENGINE"),
         'NAME': os.getenv("DATABASE_NAME"),
         'USER': os.getenv("DATABASE_USER"),
         'PASSWORD': os.getenv("DATABASE_PASSWORD"),
         'HOST': os.getenv("DATABASE_HOST"),
         'PORT': '',
+=======
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'demo',
+        'USER': 'admin',
+        'PASSWORD': '123',
+        'HOST': '13.233.224.92',
+        'PORT': '5432',
+>>>>>>> 847d058f562e65c8c82b83d835848c9f4fff24d6
     }
 }
 
