@@ -28,7 +28,12 @@
     <link rel="stylesheet" type="text/css" href="{% static 'css/main.css' %}" />
 
 
+    <script>var token = localStorage.getItem('token');
+            headers: {
+        "Authorization":token
+            }
 
+    </script>
 </head>
 <style>
 .btn-group img { margin-right: 10px }
@@ -156,7 +161,11 @@ localStorage.setItem('token', ("{{token.data}}"));
 
 
 
+<<<<<<< HEAD
      <div class="btn btn-circle btn-xl" style="margin-left: 1000px;margin-top:-110px;"  data-toggle="tooltip" data-placement="bottom" title="Account Details">
+=======
+     <div class="btn btn-circle btn-xl" style="margin-left: 1000px;margin-top:-112px;"  data-toggle="tooltip" data-placement="bottom" title="Account Details">
+>>>>>>> master
 
         <button type="button" class="btn btn-circle btn-lg   " data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="margin-left:170px;margin-top:-100px;height:20px;width:20px;">
           <img src="https://s3.ap-south-1.amazonaws.com/fundoo/{{ user.username }}" width="25" height="28">
@@ -194,9 +203,12 @@ localStorage.setItem('token', ("{{token.data}}"));
 
     <!--hr tag to print line-->
 
-        <div class="sep" style="width:840px;">
+        <div class="sep" style="width:900px;">
 
-        <hr id="divider"><div class="sepText"></div>
+        <hr id="divider" >
+            <div class="sepText">
+
+            </div>
         </div>
 {% if messages %}
     {% for message in messages %}<span>

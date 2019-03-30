@@ -36,6 +36,7 @@ def custom_login_required(function=None,login_url =''):
     except (ObjectDoesNotExist, AttributeError, Exception) as e:
        return HttpResponse("Dose not exist")
 
+<<<<<<< HEAD
 def custom_Log(function):
     try:
         def wrap(request,*args, **kwargs):
@@ -56,3 +57,9 @@ def custom_Log(function):
         return wrap
     except (User.DoesNotExist,ObjectDoesNotExist, AttributeError, Exception) as e:
        return "Dose not exist"
+=======
+    except (ObjectDoesNotExist,AttributeError ,Exception) as e:
+        print('exception occurs',e)
+
+        return redirect(reverse('login_v'))
+>>>>>>> master

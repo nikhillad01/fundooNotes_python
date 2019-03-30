@@ -50,6 +50,14 @@ AUTHENTICATION_BACKENDS = (
 # Application definition
 
 INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'django.contrib.sites',
+
     'rest_framework',
     'rest_framework.authtoken',
     'rest_auth',
@@ -59,6 +67,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'apidemo',
     'rest_framework.authentication',
+<<<<<<< HEAD
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -70,6 +79,8 @@ INSTALLED_APPS = [
     'social_django',
     'django_celery_beat',
 
+=======
+>>>>>>> master
 ]
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -200,6 +211,7 @@ JWT_AUTH = {
 
 }
 
+<<<<<<< HEAD
 LOGIN_URL = '/login_v'
 LOGIN_REDIRECT_URL = '/base'
 LOGOUT_URL = '/logout'
@@ -243,3 +255,6 @@ CELERY_BEAT_SCHEDULE = {
         'args': 49
     }
 }
+=======
+LOGIN_URL = ''
+>>>>>>> master

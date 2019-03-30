@@ -8,7 +8,11 @@ import json
 
 from django.contrib import messages, auth
 from django.contrib.auth.decorators import login_required
+<<<<<<< HEAD
 from django.core.exceptions import ObjectDoesNotExist
+=======
+# from django.contrib.sites.models import Site
+>>>>>>> master
 from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -48,8 +52,13 @@ from .models import Labels,Map_labels
 from django.db.models import Q
 import datetime
 from .cloud_services import  s3_services
+<<<<<<< HEAD
 from .tasks import task_number_one, auto_delete_archive_and_trash
 #current_site = Site.objects.get_current()
+=======
+
+# current_site = Site.objects.get_current()
+>>>>>>> master
 
 
 def index(request):         # this is homepage.1
@@ -77,6 +86,18 @@ def base(request):
 
 def open_upload_form(request):
     return render(request, 'fileupload.html', {})
+
+def get_token(key):
+    try:
+        if key:
+
+            token = redis_info.get_token(self, key)  # gets the token from redis cache
+            token = token.decode(encoding='utf-8')  # decodes the token ( from Bytes to str )
+            decoded_token = jwt.decode(token, 'secret_key', algorithms=['HS256'])
+            return decoded_token
+
+    except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+        print(e)
 
 User= get_user_model()          # will retrieve the USER model class.
 
@@ -132,7 +153,11 @@ def Signup(request):
 
     try:
 
+<<<<<<< HEAD
         print(request.META.get('HTTP_HOST'))
+=======
+        # print(request.META.get('HTTP_HOST'))
+>>>>>>> master
         # print(request.scheme)
         if request.method == 'POST':
             form = SignupForm(request.POST)
@@ -143,8 +168,12 @@ def Signup(request):
                 data = {                        # renders to html with variables
                     #"urlsafe_base64_encode" takes user id and generates the base64 code(uidb64).
                     'user': user,
+<<<<<<< HEAD
                     'domain': request.META.get('HTTP_HOST'),
                                 #current_site.domain,
+=======
+                    'domain': request.META.get('HTTP_HOST'), #current_site.domain,
+>>>>>>> master
                     #'uid': urlsafe_base64_encode(force_bytes(user.pk)),    # encodes
                     'uid': urlsafe_base64_encode(force_bytes(user.pk)).decode(),  # coz django 2.0.0 to convert it to string
                     'token': account_activation_token.make_token(user),  # creates a token
@@ -259,6 +288,25 @@ def crop(request):
     except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
         print(e)
 
+@custom_login_required
+def delete_from_s3(request):
+    res = {
+        'message': 'Something Bad Happened',  # Response Data
+        'data': {},
+        'success': False
+    }
+    try:
+        token = get_token(key='token')
+
+        s3_services.delete_object_from_s3(request, token['username'])  # calls the method from services to delete object from s3 with a key
+
+        res['message']="deleted successfully"
+        res['success']=True
+        messages.error(request, message=res['message'])
+        return redirect(reverse('getnotes'))
+    except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) :
+        messages.error(request, message=res['message'])
+        return redirect(reverse('getnotes'))
 
 
 def photo_list(request):
@@ -592,10 +640,16 @@ def get_all_labels(user):
         if user:
             labels = Labels.objects.filter(user=user).order_by('-created_time')
             return labels
+<<<<<<< HEAD
         else:
             return []
+=======
+        # else:
+        #     return []
+>>>>>>> master
     except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
         print(e)
+        # return []
 
 
 def get_all_users(username):
@@ -928,8 +982,13 @@ def view_notes_for_each_label(request, pk):
 
         if pk:            # if pk and id is not None.
             token = get_token(key='token')      # gets the token from redis cache
+<<<<<<< HEAD
             if token:
                 user = User.objects.get(username=token['username']).pk  # gets the PK of user from token's username
+=======
+
+            user = User.objects.get(username=token['username']).pk  # gets the PK of user from token's username
+>>>>>>> master
 
                 if user:
                     label_id=pk         # sets the pk and id tp label and user id
@@ -1024,7 +1083,11 @@ def remove_labels(request,id,key,*args,**kwargs):
         if id and key:      # if all details are provided
             token = get_token(key='token')      # gets the token from redis cache
             user = User.objects.get(username=token['username']).pk  # gets the PK of user from token's username
+<<<<<<< HEAD
             if user:
+=======
+
+>>>>>>> master
             # gets the specific item .
 
                 item = Map_labels.objects.get(user_id=user, label_id=key, note_id=id)
@@ -1116,9 +1179,13 @@ def reminder(request):
 
     try:
             token = get_token(key='token')      # gets the token from redis cache
+<<<<<<< HEAD
 
             user = User.objects.get(username=token['username']).pk  # gets the user from username
 
+=======
+            user = User.objects.get(username=token['username']).pk  # gets the user from username
+>>>>>>> master
                                                                         # if request made from User.
             items = Notes.objects.filter(user=user).values()    # Gets all notes  for particular user.
 
@@ -1159,9 +1226,30 @@ def reminder(request):
         return render(request,'in.html', {})
 
 
+<<<<<<< HEAD
 class set_card_reminder(UpdateAPIView):
     serializer_class =reminder_serializer
     def post(request,pk):
+=======
+
+
+
+class Update(UpdateAPIView):        # UpdateAPIView DRF view , used for update only operations.
+
+    """ This is Used for Collaborator From Card"""
+
+    try:
+        serializer_class = NoteSerializer
+
+    except (KeyboardInterrupt,MultiValueDictKeyError,Exception) as e:
+
+        print(e)
+
+
+    def post(self, request, pk):
+        """ This method is used to update  and add collaborator from card """
+
+>>>>>>> master
         res = {
             'message': 'No result found',  # Response Data
             'data': {},
@@ -1169,6 +1257,7 @@ class set_card_reminder(UpdateAPIView):
         }
 
         try:
+<<<<<<< HEAD
             if request.data['reminder1']:
                 reminder1=request.POST['reminder1']
 
@@ -1177,6 +1266,25 @@ class set_card_reminder(UpdateAPIView):
                 if note:
                     note.reminder=r.date()
                     note.save()
+=======
+            if pk and request.data['collaborate']:
+
+                token = get_token(key='token')      # gets the token from redis cache
+
+                logged_in_user = User.objects.get(username=token['username'])
+
+                item = Notes.objects.get(id=pk)     # gets the Note
+                collab = request.data['collaborate']    # gets the user if to collaborate
+                user = User.objects.get(id=collab)      # gets the user from ID
+                email_to_send=user.email
+
+                if Notes.collaborate.through.objects.filter(user_id=user, notes_id=item.id):
+
+                    """ Checks if collaborator is already attached to particular Note """
+
+                    res['message']="Collaborator Already Exists to this note"
+                    messages.success(request, message=res['message'])
+>>>>>>> master
                     return redirect(reverse('getnotes'))
                 else:
                     messages.error(request, message=res['message'])
@@ -1185,10 +1293,22 @@ class set_card_reminder(UpdateAPIView):
             messages.error(request, message=res['message'])
             return render(request,'in.html', {})
 
+<<<<<<< HEAD
+=======
+                    item.collaborate.add(user)
+                    item.save()
+                    res['message'] = "Collabrator added successfully"
+
+                    data = {
+                        'note_sender': logged_in_user,
+                        'domain':request.META.get('HTTP_HOST'),
+                    }
+>>>>>>> master
 
 
 
 
+<<<<<<< HEAD
 def get_token(key):
     try:
         if key:
@@ -1201,6 +1321,8 @@ def get_token(key):
             return None
     except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
         print(e)
+=======
+>>>>>>> master
 
 
 class View_reminder(View):
@@ -1373,7 +1495,11 @@ def invite(request):
 
             data = {
                 'user': user,
+<<<<<<< HEAD
                 'domain': request.META.get('HTTP_HOST'),#current_site.domain,
+=======
+                'domain': request.META.get('HTTP_HOST'),
+>>>>>>> master
             }
 
             message = render_to_string('invite.html', data)
@@ -1403,6 +1529,7 @@ class Update(UpdateAPIView):        # UpdateAPIView DRF view , used for update o
 
     """ This is Used for Collaborator From Card"""
 
+<<<<<<< HEAD
     try:
         serializer_class = NoteSerializer
 
@@ -2312,3 +2439,5 @@ class reminder_notification(RetrieveAPIView):
         except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
             return JsonResponse(e, safe=False)
 
+=======
+>>>>>>> master
