@@ -1113,8 +1113,8 @@ def search(request):
         posts = NotesDocument.search().query("match", title=q)
     else:
         posts = ''
-
-    return render(request, 'Notes/search.html', {'posts': posts})
+    all_map = Map_labels.objects.all()
+    return render(request, 'Notes/search.html', {'posts': posts,'all_map':all_map})
 
 @custom_login_required
 def reminder(request):

@@ -5,5 +5,5 @@ notes = Index('notes')
 class NotesDocument(DocType):
     class Meta:
         model=Notes
-        fields=['title',
+        fields=['id','title',
                 'description','created_time','reminder','is_archived','for_color','trash','is_pinned']
