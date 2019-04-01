@@ -5,11 +5,10 @@ import datetime
 from celery import task, shared_task
 from django.contrib.auth.models import User
 from django.db.models import Q
-from django.http import HttpResponse
 from django.utils.datastructures import MultiValueDictKeyError
 
 from .models import Notes
-#from .views import get_token
+
 
 
 @shared_task

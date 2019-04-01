@@ -22,12 +22,13 @@
 
 #divider{
     margin-top: -13px;
-<<<<<<< HEAD
+
     margin-left: -450px;
-=======
+
     margin-left: -500px;
->>>>>>> master
+
     border-top:1px solid #c1bbbb;
+    color:black;
 }
 
 .group 			  {
