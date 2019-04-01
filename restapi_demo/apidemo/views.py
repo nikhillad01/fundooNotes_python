@@ -1045,66 +1045,76 @@ def remove_labels(request,id,key,*args,**kwargs):
         return redirect(reverse('getnotes'))
 
 
-@custom_login_required
+# @custom_login_required
+# def search(request):
+#     res = {
+#         'message': 'Invalid details provided',  # Response Data
+#         'data': {},
+#         'success': False
+#     }
+#     try:
+#             if request.POST['search_text']:                     # if search field is not none
+#
+#                 token = get_token('token')                          # gets the token from redis cach                         algorithms=['HS256'])  # decodes JWT token and gets the values Username etc
+#                 user = User.objects.get(username=token['username']).pk  # gets the user from username
+#
+#                 if user:
+#                     #search_text = request.POST['search_text']       # get the search text
+#                     search_text = request.GET.get('search_text')  # get the search text
+#                     # __contains checks if text is present in a field of model
+#                     print(search_text)
+#                     #new_notelist=Notes.objects.filter(Q(title__contains=search_text),user=user).values()
+#                     new_notelist=NotesDocument.search().query("match", title=search_text)
+#                     print('elastic search results--',new_notelist)
+#                     print('elastic search results--', type(new_notelist))
+#                     if new_notelist:       # if note_list is not blank
+#
+#                         paginator = Paginator(new_notelist, 9)  # Show 9 contacts per page
+#                         page = request.GET.get('page')
+#                         notelist = paginator.get_page(page)
+#
+#                         res['success'] = True
+#                         res['data'] = notelist
+#                         data=[]
+#                         for i in new_notelist:
+#                             data.append(i)
+#                         if request.is_ajax:
+#                             #return render(request, 'in.html', {'not_list': new_notelist})
+#                             return HttpResponse(new_notelist)
+#                         else:
+#                             print('not ajax')
+#                     else:
+#                         res['message']="No results found"
+#                         print('')
+#                         messages.error(request, message=res['message'])
+#                         return redirect(reverse('getnotes'))
+#                 else:
+#                     print('user not found')
+#
+#             else:
+#                 res['message']="no data"
+#                 messages.error(request, message=res['message'])
+#                 print('no post')
+#                 return redirect(reverse('getnotes'))
+#
+#     except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+#          print("Exception---------------",e)
+#          #res['message']=""
+#          #messages.error(request, message=res['message'])
+#          return redirect(reverse('getnotes'))
+
+
 def search(request):
-    res = {
-        'message': 'Invalid details provided',  # Response Data
-        'data': {},
-        'success': False
-    }
-    try:
-            if request.POST['search_text']:                     # if search field is not none
 
-                token = get_token('token')                          # gets the token from redis cach                         algorithms=['HS256'])  # decodes JWT token and gets the values Username etc
-                user = User.objects.get(username=token['username']).pk  # gets the user from username
+    q = request.GET.get('search_text')
 
-                if user:
-                    search_text = request.POST['search_text']       # get the search text
+    if q:
+        print(q)
+        posts = NotesDocument.search().query("match", title=q)
+    else:
+        posts = ''
 
-                    # __contains checks if text is present in a field of model
-
-                    #new_notelist=Notes.objects.filter(Q(title__contains=search_text),user=user).values()
-                    new_notelist=NotesDocument.search().query("match", title=search_text)
-                    print('elastic search results--',new_notelist)
-                    print('elastic search results--', type(new_notelist))
-                    if new_notelist:       # if note_list is not blank
-
-                        paginator = Paginator(new_notelist, 9)  # Show 9 contacts per page
-                        page = request.GET.get('page')
-                        notelist = paginator.get_page(page)
-
-                        res['success'] = True
-                        res['data'] = notelist
-                        data=[]
-                        for i in new_notelist:
-                            data.append(i)
-                        if request.is_ajax:
-                            #return render(request, 'in.html', {'not_list': new_notelist})
-                            return HttpResponse(new_notelist)
-                        else:
-                            print('not ajax')
-                    else:
-                        res['message']="No results found"
-                        print('')
-                        messages.error(request, message=res['message'])
-                        return redirect(reverse('getnotes'))
-                else:
-                    print('user not found')
-
-            else:
-                res['message']="no data"
-                messages.error(request, message=res['message'])
-                print('no post')
-                return redirect(reverse('getnotes'))
-
-    except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
-         print("Exception---------------",e)
-         #res['message']=""
-         #messages.error(request, message=res['message'])
-         return redirect(reverse('getnotes'))
-
-
-
+    return render(request, 'Notes/search.html', {'posts': posts})
 
 @custom_login_required
 def reminder(request):

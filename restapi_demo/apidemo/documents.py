@@ -6,4 +6,4 @@ class NotesDocument(DocType):
     class Meta:
         model=Notes
         fields=['title',
-                'description','created_time']
+                'description','created_time','reminder','is_archived','for_color','trash','is_pinned']

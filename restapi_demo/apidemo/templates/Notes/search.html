@@ -1,0 +1,16 @@
+<form method="get">
+
+  <input id="search_text" name="search_text" type="text" placeholder="your search...">
+
+</form>
+
+{% for item in posts %}
+
+  {{ item.id }}
+  {{ item.title }}
+  {{ item.description }}
+  {{ item.reminder }}
+
+  <br>
+
+{% endfor %}

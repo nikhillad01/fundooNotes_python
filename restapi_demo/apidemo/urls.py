@@ -215,6 +215,9 @@ urlpatterns = [
 
     url(r'^oauth/', include('social_django.urls', namespace='social')),  # <--
 
+
+    url(r'^elasticsearch/', views.search, name='search'),
+
 ]
 
 
