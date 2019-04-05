@@ -5,13 +5,10 @@
 * @version: 3.7
 * @since: 11-3-2019
 """
-
-
 import pytest
 from django.test.client import encode_multipart
 from django.urls import reverse
 from rest_framework import status
-
 from restapi_demo.apidemo.serializers import get_single_data
 from .models import Notes
 import django

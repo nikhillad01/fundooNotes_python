@@ -76,7 +76,7 @@ class PhotoForm(forms.ModelForm):
 
     def save(self):
         username = self.cleaned_data.get('username')    # username to save image for particular user.
-        print('username-----------',username)
+
         photo = super(PhotoForm, self).save()
 
         x = self.cleaned_data.get('x')      # X coordinate
@@ -84,12 +84,9 @@ class PhotoForm(forms.ModelForm):
         w = self.cleaned_data.get('width')  # width of cropping box
         h = self.cleaned_data.get('height')  # height of cropping box
 
-        # print(x,y,w,h)
-        # print(photo)
-        # print('taken measures ')
+
         image = Image.open(photo.file).convert('RGB')              # opens image file using Pillow library
-        #print('take image object')
-        #image.show()
+
         cropped_image = image.crop((x, y, w+x, h+y))        # crops image with x,y,w,h
         resized_image = cropped_image.resize((200, 200), Image.ANTIALIAS)  # resize cropped image.
         resized_image.save(photo.file.path)
@@ -100,8 +97,7 @@ class PhotoForm(forms.ModelForm):
         return photo
 
     def clean_photo(self):
-        #image_file = self.cleaned_data.get('photo')
-        #super(PhotoForm, self)
+
         try:
             image_file = super(PhotoForm, self)
             if not image_file.name.endswith(".png",".jpeg",".jpg"):
@@ -112,14 +108,3 @@ class PhotoForm(forms.ModelForm):
 
         except Exception as e:
             print(e)
-    # def clean_photo(self):
-    #     photo = self.cleaned_data.get(['photo'])
-    #     print('cleaned ',photo)
-    #     if photo:
-    #         print('in if loop')
-    #         format = Image.open(photo.file).format
-    #         print('format ',format)
-    #         photo.file.seek(0)
-    #         if format in settings.VALID_IMAGE_FILETYPES:
-    #             return photo
-    #     raise forms.ValidationError('error')

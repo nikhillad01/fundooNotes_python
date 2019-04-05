@@ -22,7 +22,6 @@ from rest_framework.views import APIView
 from django.http import HttpResponse
 from django.contrib.auth import login
 from self import self
-
 from .documents import NotesDocument
 from .redis_services import redis_info
 from .models import Notes
@@ -373,7 +372,7 @@ class getnotes(View):
     def get(self, request):
 
         try:
-            print('aUTH @!!@!@!@!@ ',request.META.get('HTTP_AUTHORIZATION'))
+            print(request.META.get('HTTP_AUTHORIZATION'))
         except Exception as e:
             print(e)
 
@@ -392,7 +391,6 @@ class getnotes(View):
             #task_number_one.delay()
             auto_delete_archive_and_trash.delay(49)
 
-
             token=get_token('token')
             user=User.objects.get(username=token['username'])
 
@@ -403,7 +401,7 @@ class getnotes(View):
                                                                                                                   )  # shows note only added by specific user.
             stores_id_note = []
             for i in note_list:
-                #i=json.dumps(i)
+
                 stores_id_note.append(i['id'])
             collaborators_to_note=Notes.collaborate.through.objects.filter(notes_id__in=stores_id_note).values()
 
@@ -446,7 +444,14 @@ class getnotes(View):
             allnotes=[]
             for i in note_list:
                 allnotes.append(i)
-
+            all_pinned_notes = Notes.objects.filter(~Q(is_pinned=None),~Q(is_pinned=False),user=user.id)
+            print('all pinned notes ',all_pinned_notes)
+            count=0
+            all_pinned=[]
+            for i in all_pinned_notes:
+                all_pinned.append(i)
+                count+=1
+            print('Total count ', count)
             #return JsonResponse(allnotes,safe=False)
             return render(request, 'in.html', {'notelist': notelist,'labels':labels,'all_labels':all_labels,'all_map':all_map,'all_users':all_users,'collaborators_to_note': collaborators_to_note})
 
@@ -1064,9 +1069,8 @@ def remove_labels(request,id,key,*args,**kwargs):
 #                     # __contains checks if text is present in a field of model
 #                     print(search_text)
 #                     #new_notelist=Notes.objects.filter(Q(title__contains=search_text),user=user).values()
-#                     new_notelist=NotesDocument.search().query("match", title=search_text)
-#                     print('elastic search results--',new_notelist)
-#                     print('elastic search results--', type(new_notelist))
+#                     #new_notelist=NotesDocument.search().query("match", title=search_text)
+#
 #                     if new_notelist:       # if note_list is not blank
 #
 #                         paginator = Paginator(new_notelist, 9)  # Show 9 contacts per page

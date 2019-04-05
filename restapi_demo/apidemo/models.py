@@ -27,7 +27,7 @@ class RestRegistration(models.Model):       # Registration model for REST API.
 
 
 class Photo(models.Model):              # Model For profile picture
-    file = models.ImageField(validators=[FileExtensionValidator(allowed_extensions=['jpeg'])])
+    file = models.ImageField(validators=[FileExtensionValidator(allowed_extensions=['jpeg','png'])])
     description = models.CharField(max_length=255, blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 

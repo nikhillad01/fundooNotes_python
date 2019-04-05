@@ -840,7 +840,7 @@ function changeColor(clicked_id)
         $('#search').keyup(function(){
             $.ajax({
                 async: true,
-                type:"GET",
+                type:"POST",
                 url:"/search/",
                 data:{
                     'search_text':$('#search').val(),
