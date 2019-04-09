@@ -50,6 +50,7 @@ AUTHENTICATION_BACKENDS = (
 # Application definition
 
 INSTALLED_APPS = [
+    'apidemo',
     'rest_framework',
     'rest_framework.authtoken',
     'rest_auth',
@@ -57,7 +58,7 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'crispy_forms',
-    'apidemo',
+
     'rest_framework.authentication',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -195,6 +196,7 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
 
     ],
+        'TEST_REQUEST_DEFAULT_FORMAT':'json',
         "DATE_INPUT_FORMATS": ["%m-%d-%Y"],
 }
 
@@ -226,7 +228,7 @@ SWAGGER_SETTINGS = {
 
 }
 
-
+SOCIAL_AUTH_URL_NAMESPACE = 'social'
 # social authentication keys
 
 SOCIAL_AUTH_GITHUB_KEY =os.getenv("SOCIAL_AUTH_GITHUB_KEY")

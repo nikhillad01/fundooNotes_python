@@ -4,6 +4,7 @@ import datetime
 
 from celery import task, shared_task
 from django.contrib.auth.models import User
+from django.core.mail import EmailMessage
 from django.db.models import Q
 from django.utils.datastructures import MultiValueDictKeyError
 
@@ -65,5 +66,15 @@ def auto_delete_archive_and_trash(user):
 
         return notes_to_trash, trash_note_list
 
+    except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+        print("Exception", e)
+
+@shared_task
+def send_email(mail_subject, message, to_email):
+    try:
+
+        email=EmailMessage(mail_subject, message, to=[to_email])
+        email.send()
+        return 'Email sent successfully'
     except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
         print("Exception", e)

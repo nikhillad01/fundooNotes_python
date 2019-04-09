@@ -23,7 +23,7 @@ from django.http import HttpResponse
 from django.contrib.auth import login
 from self import self
 from .documents import NotesDocument
-from .redis_services import redis_info
+from .redis_services import redis_info, set_user_credentials
 from .models import Notes
 from .forms import SignupForm
 from django.utils.encoding import force_bytes, force_text
@@ -44,12 +44,14 @@ from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
 from .serializers import NoteSerializer
 from rest_framework import status
-from .custom_decorators import custom_login_required, custom_Log
+from .custom_decorators import custom_login_required, custom_Log, validating_from_token
 from .models import Labels,Map_labels
 from django.db.models import Q
 import datetime
 from .cloud_services import  s3_services
-from .tasks import task_number_one, auto_delete_archive_and_trash
+from .tasks import task_number_one, auto_delete_archive_and_trash, send_email
+
+
 #current_site = Site.objects.get_current()
 
 
@@ -112,19 +114,21 @@ class LoginView(ListCreateAPIView):
                         jwt_token = {'token': jwt.encode(payload, "secret_key", algorithm='HS256')}
                         token=jwt_token['token'].decode(encoding='utf-8')
 
-                        return JsonResponse({'token':token},safe=False)      # returns token as response with success status code.
-
+                        #return JsonResponse({'token':token},safe=False)      # returns token as response with success status code.
+                        return JsonResponse({"logged":"in",'success':True},status=status.HTTP_200_OK)
 
                     else:
-                        return HttpResponse("Your account was inactive.")
+                        return JsonResponse({"message":"Your account was inactive.",'success': False},status=status.HTTP_404_NOT_FOUND)
                 else:
                         print("Someone tried to login and failed.")
                         print("They used username: {} and password: {}".format(username, password))
-                        return HttpResponse("Invalid login details given")
+                        return JsonResponse({"message":"Invalid login details given",'success': False},status=status.HTTP_404_NOT_FOUND)
 
         except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
             print(e)
-            return render(request, 'dashboard.html', {})
+            return JsonResponse({"message": "Invalid login details given", 'success': False},
+                                status=status.HTTP_404_NOT_FOUND)
+            #return render(request, 'dashboard.html', {})
 
 
 
@@ -153,8 +157,9 @@ def Signup(request):
                 message = render_to_string('acc_active_email.html', data)
                 mail_subject = 'Activate your Fundoo account.'  # mail subject
                 to_email = form.cleaned_data.get('email')       # mail id to be sent to
-                email = EmailMessage(mail_subject, message, to=[to_email])   # takes 3 args: 1. mail subject 2. message 3. mail id to send
-                email.send()                                    # sends the mail
+                # email = EmailMessage(mail_subject, message, to=[to_email])   # takes 3 args: 1. mail subject 2. message 3. mail id to send
+                # email.send()                                    # sends the mail
+                send_email.delay(mail_subject,message,to_email)
                 return HttpResponse('Please confirm your email address to complete the registration')
 
         else:
@@ -224,7 +229,7 @@ def demo_user_login(request):
 
                     redis_info.set_token(self, 'token', res['data'])    # set the token to redis
 
-
+                    set_user_credentials()
                     return render(request, 'in.html', {'token': res})   # renders to page with context=token
 
                 else:
@@ -299,7 +304,7 @@ def photo_list(request):
 
 def demo(request):
     try:
-        return render(request,'demo.html',{})
+        return render(request, 'demo.html', {})
     except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
         print(e)
 
@@ -348,19 +353,19 @@ class AddNote(CreateAPIView):   # CreateAPIView used for create only operations.
             # check serialized data is valid or not
 
             if request.data['title'] and request.data['description']:   # if title and description is not provided.
-
-
                 if serializer.is_valid():
                                                 # if valid then save it
                     serializer.save()
                                                 # in response return data in json format
-                    return HttpResponseRedirect(reverse('getnotes'),content=res)
-
+                    #return HttpResponseRedirect(reverse('getnotes'),content=res,status=status.HTTP_201_CREATED)
+                    res['success']=True
+                    return JsonResponse({"success":True})
             else:                              # else return error msg in response
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                return JsonResponse({"success":False}, status=status.HTTP_400_BAD_REQUEST)
         except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
             print(e)
-            return redirect(reverse('getnotes'))        # redirects to getnotes view
+            return JsonResponse({"success":False}, status=status.HTTP_400_BAD_REQUEST)
+            #return redirect(reverse('getnotes'))        # redirects to getnotes view
 
 
 
@@ -387,7 +392,7 @@ class getnotes(View):
         """This method is used to read all the notes from database."""
 
         try:
-               # gets all the note and sort by created time
+            # gets all the note and sort by created time
             #task_number_one.delay()
             auto_delete_archive_and_trash.delay(49)
 
@@ -401,10 +406,9 @@ class getnotes(View):
                                                                                                                   )  # shows note only added by specific user.
             stores_id_note = []
             for i in note_list:
-
                 stores_id_note.append(i['id'])
-            collaborators_to_note=Notes.collaborate.through.objects.filter(notes_id__in=stores_id_note).values()
 
+            collaborators_to_note=Notes.collaborate.through.objects.filter(notes_id__in=stores_id_note).values()
 
             items=Notes.collaborate.through.objects.filter(user_id=user.id).values()
 
@@ -445,18 +449,21 @@ class getnotes(View):
             for i in note_list:
                 allnotes.append(i)
             all_pinned_notes = Notes.objects.filter(~Q(is_pinned=None),~Q(is_pinned=False),user=user.id)
-            print('all pinned notes ',all_pinned_notes)
+           # print('all pinned notes ',all_pinned_notes)
             count=0
             all_pinned=[]
             for i in all_pinned_notes:
                 all_pinned.append(i)
                 count+=1
-            print('Total count ', count)
-            #return JsonResponse(allnotes,safe=False)
-            return render(request, 'in.html', {'notelist': notelist,'labels':labels,'all_labels':all_labels,'all_map':all_map,'all_users':all_users,'collaborators_to_note': collaborators_to_note})
+
+            user_token=redis_info.get_current_loggedUser(self,key='logged_in_user')
+            print('-----------user---------------',user_token)
+            return JsonResponse({"success":True})
+            #return render(request, 'in.html', {'notelist': notelist,'labels':labels,'all_labels':all_labels,'all_map':all_map,'all_users':all_users,'collaborators_to_note': collaborators_to_note})
 
         except (Notes.DoesNotExist, Labels.DoesNotExist, User.DoesNotExist, ObjectDoesNotExist,KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
             print(e)
+            return JsonResponse({"success": False,"ex":e})
 
 
 
@@ -1380,38 +1387,36 @@ def invite(request):
         'success': False
     }
 
-    try:
-        if request.POST['email']:
+    # try:
+    if request.POST['email']:
 
-            token = get_token(key='token')
-            user = User.objects.get(username=token['username'])
+        token = get_token(key='token')
+        user = User.objects.get(username=token['username'])
 
-            email_user=request.POST['email']        # gets the email
+        email_user = request.POST['email']  # gets the email
 
-            data = {
-                'user': user,
-                'domain': request.META.get('HTTP_HOST'),#current_site.domain,
-            }
+        data = {
+            'user': user,
+            'domain': request.META.get('HTTP_HOST'),  # current_site.domain,
+        }
 
-            message = render_to_string('invite.html', data)
-            mail_subject = 'Fundoo Invitation'      # mail subject
-            to_email = email_user                   # mail id to be sent to
-            email = EmailMessage(mail_subject, message,
-                                 to=[to_email])     # takes 3 args: 1. mail subject 2. message 3. mail id to send
-            email.send()                            # sends the mail
+        message = render_to_string('invite.html', data)
+        mail_subject = 'Fundoo Invitation'  # mail subject
+        to_email = email_user  # mail id to be sent to
+                                                            # takes 3 args: 1. mail subject 2. message 3. mail id to send
+        send_email.delay(mail_subject, message, to_email)   # sends the mail
+        res['message'] = "Invitation sent successfully"
+        messages.success(request, message=res['message'])
+        return redirect(reverse('getnotes'))
 
-            res['message']="Invitation sent successfully"
-            messages.success(request, message=res['message'])
-            return redirect(reverse('getnotes'))
-
-        else:
-            res['message']="No values given"
-            messages.error(request, message=res['message'])
-            return redirect(reverse('getnotes'))
-
-    except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception):
+    else:
+        res['message'] = "No values given"
         messages.error(request, message=res['message'])
         return redirect(reverse('getnotes'))
+
+    # except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception):
+    #     messages.error(request, message=res['message'])
+    #     return redirect(reverse('getnotes'))
 
 
 
@@ -1439,7 +1444,7 @@ class Update(UpdateAPIView):        # UpdateAPIView DRF view , used for update o
 
         try:
             if pk and request.data['collaborate']:
-
+                print(pk,request.data['collaborate'])
                 token = get_token(key='token')      # gets the token from redis cache
                 logged_in_user = User.objects.get(username=token['username'])
 
@@ -1476,6 +1481,8 @@ class Update(UpdateAPIView):        # UpdateAPIView DRF view , used for update o
                         email = EmailMessage(mail_subject, message,
                                              to=[to_email])  # takes 3 args: 1. mail subject 2. message 3. mail id to send
                         email.send()  # sends the mail
+                        # takes 3 args: 1. mail subject 2. message 3. mail id to send
+                       # send_email.delay(mail_subject, message, to_email)  # sends the mail
                         messages.success(request, message=res['message'])
                         return JsonResponse({'message': res['message']})
                         #return redirect(reverse('getnotes'))
@@ -1485,13 +1492,13 @@ class Update(UpdateAPIView):        # UpdateAPIView DRF view , used for update o
                     messages.error(request, message=res['message'])
                     return JsonResponse({'message': res['message']})
             else:
-
+                res['message']='no pk or data'
                 messages.error(request, message=res['message'])
                 return JsonResponse({'message': res['message']})
                 #return redirect(reverse('getnotes'))
 
         except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
-            messages.error(request, message=res['message'])
+            messages.error(request, message=e)
             return JsonResponse({'mess': res['message']})
             # return render(request, 'in.html', {})
 
@@ -1502,11 +1509,14 @@ class get_data_by_id(RetrieveAPIView):
         This API is used to get a single instance data by ID(single note data or all notes by single user)
         Parameter: ID
         RetriveAPIView: Used for read-only operations  ,provides get  method handlers
+
         """
 
 
         serializer_class = get_single_data
         queryset = Notes.objects.all()
+
+        @method_decorator(validating_from_token)
         def post(self, request,pk):
 
             try:
@@ -1551,6 +1561,7 @@ class delete_note_by_id(DestroyAPIView):
     except (ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
         print(e)
 
+    #@method_decorator(validating_from_token)
     def delete(self, request, pk):
         try:
             res = {  # Response information .
@@ -1623,6 +1634,7 @@ class add_label(CreateAPIView):
     """
 
     serializer_class = add_label_serializer
+    @method_decorator(validating_from_token)
     def post(self,request,pk):
         res = {  # Response information .
             'message': 'Something bad happened',
@@ -1658,7 +1670,7 @@ class delete_created_label(DestroyAPIView):
     """
 
     queryset = Notes.objects.all()
-
+    @method_decorator(validating_from_token)
     def delete(self, request, pk):
         try:
             res = {                         # Response information .
@@ -1699,6 +1711,8 @@ class map_label_with_note(CreateAPIView):
         """
 
     serializer_class =map_label_serializer
+
+    @method_decorator(validating_from_token)
     def post(self, request, note_id, user_id, label_id):
 
         res = {                                         # Response information .
@@ -1783,6 +1797,7 @@ class get_noteLabel_list(ListAPIView):
          ListAPIView: Used for read-only operations
     """
 
+    @method_decorator(validating_from_token)
     def get(self,request,note_id):
         res = {  # Response information .
             'message': 'Something bad happened',
@@ -1830,6 +1845,7 @@ class get_colaborator_for_note(ListAPIView):
          ListAPIView: Used for read-only operations
     """
 
+    @method_decorator(validating_from_token)
     def get(self, request, note_id):
         res = {  # Response information .
             'message': 'Something bad happened',
@@ -1873,6 +1889,7 @@ class get_notes_of_label(ListAPIView):
          ListAPIView: Used for read-only operations
     """
 
+    @method_decorator(validating_from_token)
     def get(self, request, label_id):
         res = {  # Response information .
             'message': 'Something bad happened',
@@ -1918,6 +1935,8 @@ class make_note_archive(UpdateAPIView):
     """
 
     serializer_class =extra_functions
+
+    @method_decorator(validating_from_token)
     def post(self, request, note_id):
 
         res = {  # Response information .
@@ -1967,6 +1986,8 @@ class make_note_trash(UpdateAPIView):
     """
 
     serializer_class =extra_functions
+
+    @method_decorator(validating_from_token)
     def post(self,request,note_id):
 
         res = {  # Response information .
@@ -2017,6 +2038,8 @@ class note_pin_unpin(UpdateAPIView):
     """
 
     serializer_class =extra_functions
+
+    @method_decorator(validating_from_token)
     def post(self,request,note_id):
 
         res = {  # Response information .
@@ -2065,6 +2088,7 @@ class view_archived_notes(ListAPIView):
          ListAPIView: Used for read-only operations
     """
 
+    @method_decorator(validating_from_token)
     def get(self,request,user_id):
         res = {                                                     # Response information .
             'message': 'Something bad happened',
@@ -2103,7 +2127,7 @@ class view_trash_notes(ListAPIView):
          user_id: to get data of this particular user
          ListAPIView: Used for read-only operations
     """
-
+    @method_decorator(validating_from_token)
     def get(self,request,user_id):
         res = {                                                 # Response information .
             'message': 'Something bad happened',
@@ -2111,6 +2135,8 @@ class view_trash_notes(ListAPIView):
             'success': False
         }
         try:
+            print('validated',request.META.get('HTTP_AUTHORIZATION'))
+
             if user_id:                                         # if user id is provided
                 if User.objects.filter(pk=user_id).exists():    # if user is valid and present in DB.
                     notes=Notes.objects.filter(user_id=user_id, trash=True).values()        # gets all trash notes of user
@@ -2144,6 +2170,7 @@ class view_pinned_notes(ListAPIView):
          ListAPIView: Used for read-only operations
     """
 
+    @method_decorator(validating_from_token)
     def get(self,request,user_id):
         res = {                                                 # Response information .
             'message': 'Something bad happened',
@@ -2227,6 +2254,7 @@ class update_details(UpdateAPIView):
 
     serializer_class = update_serializer
 
+    @method_decorator(validating_from_token)
     def post(self,request, note_id):
         res = {  # Response information .
             'message': 'Something bad happened',
@@ -2329,3 +2357,27 @@ class reminder_notification(RetrieveAPIView):
         except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
             return JsonResponse(e, safe=False)
 
+
+
+class RestRegistration(CreateAPIView):
+    """ Registration API """
+
+    serializer_class = registrationSerializer
+
+    def post(self, request, *args, **kwargs):
+        res = {"message": "something bad happened",
+               "data": {},
+               "success": False}
+        username = request.data['username']
+        email = request.data['email']
+        password = request.data['password']
+        if username and email and password is not "":
+            user = User.objects.create_user(username=username, email=email, password=password)
+            user.is_active = False
+            user.save()
+
+            res['message'] = "registered Successfully"
+            res['success'] = True
+            return Response(res,status.HTTP_201_CREATED)
+        else:
+            return Response({'message': 'registered Successfully', 'data': {}, 'success': True},status.HTTP_406_NOT_ACCEPTABLE)

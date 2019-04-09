@@ -17,7 +17,8 @@ urlpatterns = [
     path('rest_register/', views.Signup,name='rest_register'),  # Registration using REST.
     path('rest_login/', views.LoginView.as_view(), name='rest_login'),       # REST Login.
     path('dash/', include('rest_framework.urls', namespace='rest_framework')),
-
+    #RestRegistration
+    path('RestRegistration/', views.RestRegistration.as_view(), name='RestRegistration'),
 
 
     # Login,Logout And Registration

@@ -12,6 +12,8 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import QueryDict, HttpResponse
+from django.shortcuts import redirect
+from django.urls import reverse
 from self import self
 from .redis_services import redis_info
 import jwt
@@ -23,7 +25,7 @@ def custom_login_required(function=None,login_url =''):
             token = redis_info.get_token(self,'token')  # gets the token from redis cache
             if token:
                 token = token.decode(encoding='utf-8')  # decodes the token ( from Bytes to str )
-                decoded_token = jwt.decode(token, 'secret_key',algorithms=['HS256'])  # decodes JWT token and gets the values Username etc
+                decoded_token = jwt.decode(token, 'secret_key', algorithms=['HS256'])  # decodes JWT token and gets the values Username etc
                 user = User.objects.get(username=decoded_token['username']).pk  # gets the user from username
             else:
                 return None
@@ -59,6 +61,37 @@ def custom_Log(function):
        return "Dose not exist"
 
     except (ObjectDoesNotExist,AttributeError ,Exception) as e:
-        print('exception occurs',e)
+        print('exception occurs', e)
+        return redirect(reverse('login_v'))
+
+
+
+def validating_from_token(function):
+    try:
+        def wrap(request,*args, **kwargs):
+            token = request.META.get('HTTP_AUTHORIZATION')
+            if token:
+                decoded_token = jwt.decode(token, 'secret_key', algorithms=['HS256'])  # decodes JWT token and gets the values Username etc
+                tokens_username=decoded_token['username']
+                stored_username=redis_info.get_token(self, decoded_token['username'])
+                stored_username=stored_username.decode(encoding='utf-8')
+
+                if tokens_username==stored_username:
+                    print('Valid user')
+                else:
+                    return redirect(reverse('login_v'))
+                    #raise ObjectDoesNotExist
+            else:
+                return None
+            if function:
+                return function(request, *args, **kwargs)
+            else:
+                return "Not valid user"
+        return wrap
+    except (ObjectDoesNotExist, AttributeError, Exception) as e:
+       return "Dose not exist"
+
+    except (ObjectDoesNotExist, AttributeError, Exception) as e:
+        print('exception occurs', e)
 
         return redirect(reverse('login_v'))
