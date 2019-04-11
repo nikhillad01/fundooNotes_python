@@ -4,7 +4,6 @@
 * @version: 3.7
 * @since: 01-1-2019
 """
-import json
 
 from django.contrib import messages, auth
 from django.contrib.auth.decorators import login_required
@@ -13,12 +12,11 @@ from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.http import require_POST
-from django.http import HttpResponsePermanentRedirect, HttpResponseRedirect, JsonResponse, request
+from django.http import HttpResponsePermanentRedirect,  JsonResponse, request
 from django.urls import reverse
-from rest_framework.decorators import permission_classes, api_view
+from rest_framework.decorators import permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework.views import APIView
 from django.http import HttpResponse
 from django.contrib.auth import login
 from self import self
@@ -34,7 +32,7 @@ from django.contrib.auth.models import User
 from django.core.mail import EmailMessage
 from django.contrib.auth import get_user_model, authenticate
 import jwt
-from .serializers import delete_collaborator_serializer, LoginDemoWithRest, get_single_data, \
+from .serializers import  LoginDemoWithRest, get_single_data, \
     delete_single_data_by_id, add_label_serializer, map_label_serializer, extra_functions, update_serializer, \
     reminder_serializer
 from .serializers import registrationSerializer
@@ -49,10 +47,8 @@ from .models import Labels,Map_labels
 from django.db.models import Q
 import datetime
 from .cloud_services import  s3_services
-from .tasks import task_number_one, auto_delete_archive_and_trash, send_email
+from .tasks import  auto_delete_archive_and_trash, send_email
 
-
-#current_site = Site.objects.get_current()
 
 
 def index(request):         # this is homepage.1
@@ -71,9 +67,14 @@ def profile_page(request):
     return render(request, 'profile.html', {})
 
 def logout(request):
-    auth.logout(request)
-    redis_info.flush_all(self)
-    return render(request, 'login.html')
+
+    try:
+        auth.logout(request)
+        redis_info.flush_all(self)          # flushes all data from cache
+        return render(request, 'login.html')
+
+    except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+        return JsonResponse({"message": e})
 
 def base(request):
     return render(request, 'in.html')
@@ -87,6 +88,8 @@ class UserCreateAPI(CreateAPIView):             # Registration using Rest framew
 
     serializer_class=registrationSerializer
     queryset = User.objects.all()                  # fields according to User   (adds data to USER model)
+
+
 
 class LoginView(ListCreateAPIView):
 
@@ -105,7 +108,6 @@ class LoginView(ListCreateAPIView):
 
                 username = request.data['username']
                 password = request.data['password']
-                # print(username,password)
                 user = authenticate(username=username, password=password)
                 if user:
                     if user.is_active:
@@ -125,20 +127,12 @@ class LoginView(ListCreateAPIView):
                         return JsonResponse({"message":"Invalid login details given",'success': False},status=status.HTTP_404_NOT_FOUND)
 
         except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
-            print(e)
             return JsonResponse({"message": "Invalid login details given", 'success': False},
                                 status=status.HTTP_404_NOT_FOUND)
-            #return render(request, 'dashboard.html', {})
-
-
 
 
 def Signup(request):
-
     try:
-
-        print(request.META.get('HTTP_HOST'))
-        # print(request.scheme)
         if request.method == 'POST':
             form = SignupForm(request.POST)
             if form.is_valid():
@@ -149,7 +143,6 @@ def Signup(request):
                     #"urlsafe_base64_encode" takes user id and generates the base64 code(uidb64).
                     'user': user,
                     'domain': request.META.get('HTTP_HOST'),
-                                #current_site.domain,
                     #'uid': urlsafe_base64_encode(force_bytes(user.pk)),    # encodes
                     'uid': urlsafe_base64_encode(force_bytes(user.pk)).decode(),  # coz django 2.0.0 to convert it to string
                     'token': account_activation_token.make_token(user),  # creates a token
@@ -281,9 +274,6 @@ def photo_list(request):
 
             username = request.POST['username']
 
-
-
-            print('in view to upload above valid method')
             #if username==user:          # if username is valid
             form = PhotoForm(request.POST, request.FILES)  # django form
             if form.is_valid():
@@ -340,7 +330,6 @@ class AddNote(CreateAPIView):   # CreateAPIView used for create only operations.
 
     def post(self, request):
 
-
         try:
 
             res = {                                 # Response information .
@@ -393,7 +382,6 @@ class getnotes(View):
 
         try:
             # gets all the note and sort by created time
-            #task_number_one.delay()
             auto_delete_archive_and_trash.delay(49)
 
             token=get_token('token')
@@ -449,7 +437,6 @@ class getnotes(View):
             for i in note_list:
                 allnotes.append(i)
             all_pinned_notes = Notes.objects.filter(~Q(is_pinned=None),~Q(is_pinned=False),user=user.id)
-           # print('all pinned notes ',all_pinned_notes)
             count=0
             all_pinned=[]
             for i in all_pinned_notes:
@@ -457,8 +444,9 @@ class getnotes(View):
                 count+=1
 
             user_token=redis_info.get_current_loggedUser(self,key='logged_in_user')
-            print('-----------user---------------',user_token)
-            return JsonResponse({"success":True})
+
+
+
             #return render(request, 'in.html', {'notelist': notelist,'labels':labels,'all_labels':all_labels,'all_map':all_map,'all_users':all_users,'collaborators_to_note': collaborators_to_note})
 
         except (Notes.DoesNotExist, Labels.DoesNotExist, User.DoesNotExist, ObjectDoesNotExist,KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
@@ -525,13 +513,11 @@ def deleteN(request,id):
         else:
             try:
                 item = Notes.objects.get(pk=id)     # checks if note is present of specific id
-
                 item.trash=True
                 item.save()
                 return redirect(reverse('getnotes'))
 
             except Exception as e:
-                print(e)
                 res['message'] = "Note not present for specific ID"
                 return JsonResponse(res)
     except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
@@ -548,7 +534,7 @@ def updateform(request,pk):
         'success': False
     }
     try:
-        if pk ==None:                      # if Pk is not provided.
+        if pk== None:                      # if Pk is not provided.
             messages.error('Invalid Details')
             return redirect(reverse('getnotes'))
         else:
@@ -610,6 +596,7 @@ def get_all_labels(user):
             return []
     except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
         print(e)
+
 
 
 def get_all_users(username):
@@ -708,7 +695,6 @@ class view_trash(View):
         try:
             note_list = Notes.objects.filter(user=request.user, trash=True).order_by('-created_time')  # shows note only added by specific user.
 
-
             paginator = Paginator(note_list, 9)  # Show 9 contacts per page
             page = request.GET.get('page')        # also used as prefix in URL
             notelist = paginator.get_page(page)     # gets data page by page
@@ -716,9 +702,11 @@ class view_trash(View):
             res['message'] = "All Trash Notes"
             res['success'] = True
             res['data'] = notelist
-            print(notelist)
+
             labels = get_all_labels(request.user)
             all_users=get_all_users(request.user.username)
+
+
             return render(request, 'in.html', {'notelist': note_list,'labels':labels,'all_users':all_users})
 
         except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
@@ -862,7 +850,7 @@ def add_labels(request,pk):
 
 
 @custom_login_required
-def map_labels(request, *args ,**kwargs):
+def map_labels(request, *args , **kwargs):
 
     """This method is used to map labels with each notes """
 
@@ -871,7 +859,6 @@ def map_labels(request, *args ,**kwargs):
         'data': {},
         'success': False
     }
-    print('map labels')
     try:
         if request.POST['pk'] and request.POST['id'] and request.POST['key']:
 
@@ -909,12 +896,11 @@ def delete_label(request,pk):
     try:
         if pk:
             label=Labels.objects.get(id=pk)     # gets the label by id and deletes it
-            if label:           # IF LABEL FOUND FOR GIVEN id
+            if label:                           # IF LABEL FOUND FOR GIVEN id
                 label.delete()
                 messages.success(request, message='Label deleted')
                 return redirect(reverse('getnotes'))
             else:
-                print('Label not found for given id')
                 messages.error('Label not found for given id')
                 return redirect(reverse('getnotes'))
         else:
@@ -975,7 +961,6 @@ def view_notes_for_each_label(request, pk):
                 else:
                     print('user not found')
             else:
-                print('token not found')
                 return redirect(reverse('login_v'))
         else:
             messages.success(request, message=res['message'])
@@ -1118,14 +1103,17 @@ def remove_labels(request,id,key,*args,**kwargs):
 def search(request):
 
     q = request.GET.get('search_text')
+    try:
+        if q:
+            posts = NotesDocument.search().query("match", title=q)
+        else:
+            posts = ''
+        all_map = Map_labels.objects.all()
+        return render(request, 'Notes/search.html', {'posts': posts,'all_map':all_map})
 
-    if q:
-        print(q)
-        posts = NotesDocument.search().query("match", title=q)
-    else:
-        posts = ''
-    all_map = Map_labels.objects.all()
-    return render(request, 'Notes/search.html', {'posts': posts,'all_map':all_map})
+    except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
+        return JsonResponse({"Error":e})
+
 
 @custom_login_required
 def reminder(request):
@@ -1193,11 +1181,11 @@ class set_card_reminder(UpdateAPIView):
         }
 
         try:
-            if request.data['reminder1']:
+            if request.data['reminder1']:                               # gets the reminder
                 reminder1=request.POST['reminder1']
 
                 r=datetime.datetime.strptime(reminder1, "%m/%d/%Y")
-                note=Notes.objects.get(id=pk)
+                note=Notes.objects.get(id=pk)                          # gets the note
                 if note:
                     note.reminder=r.date()
                     note.save()
@@ -1227,6 +1215,8 @@ def get_token(key):
         print(e)
 
 
+
+
 class View_reminder(View):
 
     """This method is used to display all the notes which has reminder
@@ -1241,7 +1231,6 @@ class View_reminder(View):
 
     @method_decorator(custom_login_required)    # method decorator is used for CBV
     def get(self, request):
-        #print('request-----------',request.META)
         """ Reads the notes by user and archived field"""
 
         res = {
@@ -1250,31 +1239,24 @@ class View_reminder(View):
             'success': False
         }
 
-
         try:
                 token = get_token(key='token')      # gets the token from redis cache
 
-
-
                 user = User.objects.get(username=token['username']).pk          # gets the user from username
-
 
                                                      # gets all the note and sort by created time
                 note_list = Notes.objects.filter(~Q(reminder=None), user=user).values().order_by('-created_time')  # shows note only added by specific user.
-
                                                      # Q used for complex queries ' ~ ' for negative condition
 
                 paginator = Paginator(note_list, 9)  # Show 9 contacts per page
                 page = request.GET.get('page')
                 notelist = paginator.get_page(page)
-
                 res['message'] = "All Trash Notes"
                 res['success'] = True
                 res['data'] = notelist
                 labels = get_all_labels(user)       # gets all labels created by specific user
                 all_users=get_all_users(token['username'])
                 return render(request, 'in.html', {'notelist': note_list,'labels':labels,'all_users':all_users})
-
 
         except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
             messages.error(request,res)
@@ -1290,25 +1272,19 @@ def change_color(request,pk):
             'data': {},
             'success': False
         }
+
         if pk and request.POST['change_color']:     # if pk and data for change color is not None.
-
             item = Notes.objects.get(id=pk)         # gets the note with ID
-
             new_color = request.POST['change_color']
-
             item.for_color=new_color                # changes color with new color
             item.save()
             res['message'] = "color changed"
-
             return redirect(reverse('getnotes'))
-
         else:
-            print('No Valid details given')
             return redirect(reverse('getnotes'))
 
 
     except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
-        print(e)
         messages.error(request, message=res['message'])
         return render(request, 'in.html', {})
 
@@ -1324,11 +1300,7 @@ def auto_delete_archive(request):
     try:
 
         token = get_token(key='token')     # gets the token from redis cache
-
         user=User.objects.get(username=token['username']).pk        # gets the PK of user from token's username
-
-
-
         note_list = Notes.objects.filter(~Q(archive_time=None), user_id=user, is_archived=True).values('archive_time','id','trash_time').order_by(
             '-created_time')
                                                         # gets all the notes who's archive time is not None adn is_archive field is True
@@ -1336,20 +1308,13 @@ def auto_delete_archive(request):
                                                         # gets the archive_time for each note and add 15 days to it i.e. end_date
             end_date=i['archive_time'] + datetime.timedelta(days=15)
             today=datetime.datetime.today().date()      # gets the today's date
-
             if end_date.date()==today:                  # if end date and today's date are equal means 15 days over , then move the note to trash.
-
                 item = Notes.objects.get(id=i['id'])    # gets the note by id
                 item.trash=True                         # moves to trash.
                 item.save()                             # saves the note.
-
-
-
         trash_note_list = Notes.objects.filter(~Q(trash_time=None), user_id=user,trash=True).values(
                                                                                                     'id', 'trash_time').order_by(
                                                                                                     '-created_time')
-
-
         for j in trash_note_list:
             # gets the trash_time for each note and add 15 days to it i.e. end_date
             end_date=j['trash_time'] + datetime.timedelta(days=7)
@@ -1373,10 +1338,10 @@ def auto_delete_archive(request):
         return HttpResponse(note_list,trash_note_list)
 
     except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
-        print("Exception",e)
+        return JsonResponse({"Error":e})
 
 
-#@api_view(['POST'])
+
 @custom_login_required
 @require_POST
 def invite(request):
@@ -1387,36 +1352,32 @@ def invite(request):
         'success': False
     }
 
-    # try:
-    if request.POST['email']:
+    try:
+        if request.POST['email']:
 
-        token = get_token(key='token')
-        user = User.objects.get(username=token['username'])
+            token = get_token(key='token')
+            user = User.objects.get(username=token['username'])
+            email_user = request.POST['email']  # gets the email
+            data = {
+                'user': user,
+                'domain': request.META.get('HTTP_HOST'),  # current_site.domain,
+            }
+            message = render_to_string('invite.html', data)
+            mail_subject = 'Fundoo Invitation'  # mail subject
+            to_email = email_user  # mail id to be sent to
+                                                                # takes 3 args: 1. mail subject 2. message 3. mail id to send
+            send_email.delay(mail_subject, message, to_email)   # sends the mail
+            res['message'] = "Invitation sent successfully"
+            messages.success(request, message=res['message'])
+            return redirect(reverse('getnotes'))
+        else:
+            res['message'] = "No values given"
+            messages.error(request, message=res['message'])
+            return redirect(reverse('getnotes'))
 
-        email_user = request.POST['email']  # gets the email
-
-        data = {
-            'user': user,
-            'domain': request.META.get('HTTP_HOST'),  # current_site.domain,
-        }
-
-        message = render_to_string('invite.html', data)
-        mail_subject = 'Fundoo Invitation'  # mail subject
-        to_email = email_user  # mail id to be sent to
-                                                            # takes 3 args: 1. mail subject 2. message 3. mail id to send
-        send_email.delay(mail_subject, message, to_email)   # sends the mail
-        res['message'] = "Invitation sent successfully"
-        messages.success(request, message=res['message'])
-        return redirect(reverse('getnotes'))
-
-    else:
-        res['message'] = "No values given"
+    except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception):
         messages.error(request, message=res['message'])
         return redirect(reverse('getnotes'))
-
-    # except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception):
-    #     messages.error(request, message=res['message'])
-    #     return redirect(reverse('getnotes'))
 
 
 
@@ -1424,14 +1385,12 @@ def invite(request):
 class Update(UpdateAPIView):        # UpdateAPIView DRF view , used for update only operations.
 
     """ This is Used for Collaborator From Card"""
-
     try:
         serializer_class = NoteSerializer
 
     except (KeyboardInterrupt,MultiValueDictKeyError,Exception) as e:
 
         print(e)
-
 
     def post(self, request, pk):
         """ This method is used to update  and add collaborator from card """
@@ -1444,7 +1403,6 @@ class Update(UpdateAPIView):        # UpdateAPIView DRF view , used for update o
 
         try:
             if pk and request.data['collaborate']:
-                print(pk,request.data['collaborate'])
                 token = get_token(key='token')      # gets the token from redis cache
                 logged_in_user = User.objects.get(username=token['username'])
 
@@ -1512,7 +1470,6 @@ class get_data_by_id(RetrieveAPIView):
 
         """
 
-
         serializer_class = get_single_data
         queryset = Notes.objects.all()
 
@@ -1561,7 +1518,6 @@ class delete_note_by_id(DestroyAPIView):
     except (ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
         print(e)
 
-    #@method_decorator(validating_from_token)
     def delete(self, request, pk):
         try:
             res = {  # Response information .
@@ -1656,7 +1612,6 @@ class add_label(CreateAPIView):
                 return JsonResponse(res)
 
         except (Labels.DoesNotExist, ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
-            print(e)
             return JsonResponse(res)
 
 
@@ -1740,13 +1695,11 @@ class map_label_with_note(CreateAPIView):
                 else:
                     res['message'] = 'User not found'
                     return JsonResponse(res)
-
             else:
                 res['message'] = 'No valid data provided '
                 return JsonResponse(res)
 
         except (Map_labels.DoesNotExist, ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
-            print(e)
             return JsonResponse(res)
 
 class update_label(UpdateAPIView):
@@ -1786,7 +1739,6 @@ class update_label(UpdateAPIView):
                 res['message'] = 'No valid details provided'
                 return JsonResponse(res)
         except (Labels.DoesNotExist, ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
-            print(e)
             return JsonResponse(res)
 
 class get_noteLabel_list(ListAPIView):
@@ -1812,9 +1764,7 @@ class get_noteLabel_list(ListAPIView):
                         data=[]
                         for i in labels:
                             data.append(i['label_id_id'])
-
                         label_names=Labels.objects.filter(id__in=data).values('label_name')
-
                         data=[]
                         for i in label_names:
                             data.append(i)
@@ -1834,7 +1784,6 @@ class get_noteLabel_list(ListAPIView):
                 return JsonResponse(res)
 
         except (Map_labels.DoesNotExist, Labels.DoesNotExist, ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
-            print(e)
             return JsonResponse(res)
 
 class get_colaborator_for_note(ListAPIView):
@@ -1878,7 +1827,6 @@ class get_colaborator_for_note(ListAPIView):
                 return JsonResponse(res)
 
         except (User.DoesNotExist, Notes.DoesNotExist, ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
-            print(e)
             return JsonResponse(res)
 
 class get_notes_of_label(ListAPIView):
@@ -1923,7 +1871,6 @@ class get_notes_of_label(ListAPIView):
                 return JsonResponse(res)
 
         except (Map_labels.DoesNotExist, Labels.DoesNotExist, ObjectDoesNotExist, KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
-            print(e)
             return JsonResponse(res)
 
 class make_note_archive(UpdateAPIView):
