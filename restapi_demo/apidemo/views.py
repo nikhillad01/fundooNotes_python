@@ -97,7 +97,6 @@ class LoginView(ListCreateAPIView):
     serializer_class=LoginDemoWithRest
     queryset = User.objects.all()
     http_method_names = ['post', 'get']      # to use POST method by default it was using GET.
-    #method_decorator(require_POST)
     res = {
         'message': 'Something bad happened',
         'data': {},
@@ -105,7 +104,6 @@ class LoginView(ListCreateAPIView):
     }
     def post(self, request):
         try:
-
                 username = request.data['username']
                 password = request.data['password']
                 user = authenticate(username=username, password=password)
@@ -122,8 +120,6 @@ class LoginView(ListCreateAPIView):
                     else:
                         return JsonResponse({"message":"Your account was inactive.",'success': False},status=status.HTTP_404_NOT_FOUND)
                 else:
-                        print("Someone tried to login and failed.")
-                        print("They used username: {} and password: {}".format(username, password))
                         return JsonResponse({"message":"Invalid login details given",'success': False},status=status.HTTP_404_NOT_FOUND)
 
         except (KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
@@ -413,7 +409,7 @@ class getnotes(View):
             labels = Labels.objects.filter(user=user.id).order_by('-created_time')
 
             paginator = Paginator(merged, 9)          # Show 9 contacts per page
-            page = request.GET.get('page')
+            page = request.GET.get('page', 0)
             notelist = paginator.get_page(page)
 
             res['message'] = "All Notes"
@@ -443,10 +439,10 @@ class getnotes(View):
                 all_pinned.append(i)
                 count+=1
 
-            user_token=redis_info.get_current_loggedUser(self,key='logged_in_user')
+            user_token=redis_info.get_current_loggedUser(self,key=token['username'])
 
 
-
+            return JsonResponse({'user_token':user_token})
             #return render(request, 'in.html', {'notelist': notelist,'labels':labels,'all_labels':all_labels,'all_map':all_map,'all_users':all_users,'collaborators_to_note': collaborators_to_note})
 
         except (Notes.DoesNotExist, Labels.DoesNotExist, User.DoesNotExist, ObjectDoesNotExist,KeyboardInterrupt, MultiValueDictKeyError, ValueError, Exception) as e:
@@ -1146,7 +1142,7 @@ def reminder(request):
             remind_dates=[]                     # list to store the dates for which reminder is in two days.
             for i in dates:
                 if (i-j).days<=2 and (i-j).days>=0:
-                    print(i,(i-j).days)         # calculates the difference and stores the value to list
+                            # calculates the difference and stores the value to list
                     remind_dates.append(i)
 
             new_list=[]                          # list elements has some unwanted values and in Str format
@@ -2328,3 +2324,10 @@ class RestRegistration(CreateAPIView):
             return Response(res,status.HTTP_201_CREATED)
         else:
             return Response({'message': 'registered Successfully', 'data': {}, 'success': True},status.HTTP_406_NOT_ACCEPTABLE)
+
+
+def handler404(request):
+    return render(request, '404.html', status=404)
+
+def handler500(request):
+    return render(request, '500.html', status=500)

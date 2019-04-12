@@ -5,6 +5,10 @@ from apidemo import views
 from django.contrib.auth import views as auth_views
 from rest_framework_swagger.views import get_swagger_view
 schema_view = get_swagger_view(title='fundooNotes')
+
+handler404 = views.handler404
+handler500 = views.handler500
+
 urlpatterns = [
 
     #Admin Panel and Index.
@@ -218,6 +222,8 @@ urlpatterns = [
 
 
     url(r'^elasticsearch/', views.search, name='search'),
+
+
 
 ]
 

@@ -10,7 +10,6 @@ from dotenv import load_dotenv
 from pathlib import Path  # python3 only
 from celery.schedules import crontab
 
-#from restapi_demo import apidemo
 
 load_dotenv()
 
@@ -26,7 +25,8 @@ load_dotenv(dotenv_path=env_path)
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+#DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['127.0.0.1','localhost']
 
